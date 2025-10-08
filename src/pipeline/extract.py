@@ -23,7 +23,7 @@ def extract_rules(
         List of rule dicts with extracted information
     """
     from src.config import RULE_EXTRACTION_PROMPT
-    from src.openai_client import get_openai_client
+    from src.lib.openai_client import get_openai_client
 
     if client is None:
         client = get_openai_client()

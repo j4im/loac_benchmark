@@ -456,11 +456,12 @@ Before marking Phase 2 complete:
 - **Total rules extracted**: 29
 - **Total cost**: ~$0.12 (5,863 tokens total)
 - **Validation warnings**: 0 (all rules are verbatim)
-- **Test coverage**: 23/23 tests passing
+- **Test coverage**: 42/42 tests passing (15 Phase 1 + 8 in test_extract.py + 19 in test_rules.py)
 
 **Files Created:**
 - `src/rules.py` (136 lines)
 - `src/openai_client.py` (21 lines)
+- `tests/test_rules.py` (19 comprehensive tests for rule extraction with full mocking)
 
 **Files Modified:**
 - `src/extract.py` (removed rule extraction, kept only PDF parsing)
@@ -468,6 +469,7 @@ Before marking Phase 2 complete:
 - `run_pipeline.py` (integrated Phase 2 into main pipeline)
 - `tests/test_extract.py` (added TestRuleExtraction class with 8 tests)
 - `docs/issues/loac-qa-pipeline/IMPLEMENTATION_PLAN.md` (marked Phase 2 complete, added lessons learned)
+- `docs/issues/loac-qa-pipeline/PHASE_2_DETAILED.md` (marked complete with implementation summary)
 
 **Sample Extracted Rule:**
 ```json

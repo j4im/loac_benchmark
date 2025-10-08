@@ -1,0 +1,287 @@
+"""Question generation from extracted rules using LLM."""
+
+import json
+from pathlib import Path
+from typing import Dict, List, Optional
+from datetime import datetime
+from openai import OpenAI
+
+
+def generate_definitional(
+    rule: Dict,
+    section_id: str,
+    rule_index: int,
+    client: Optional[OpenAI] = None
+) -> Dict:
+    """
+    Generate a definitional multiple-choice question for a rule.
+
+    Args:
+        rule: Rule dict with rule_text, rule_type, etc.
+        section_id: Section ID (e.g., "5.5.3")
+        rule_index: Rule index within section (for question_id)
+        client: OpenAI client (creates new if None)
+
+    Returns:
+        Question dict with full metadata
+    """
+    from src.config import DEFINITIONAL_PROMPT
+    from src.lib.openai_client import get_openai_client
+
+    if client is None:
+        client = get_openai_client()
+
+    # Build prompt
+    prompt = DEFINITIONAL_PROMPT.format(
+        rule_text=rule['rule_text'],
+        rule_type=rule['rule_type'],
+        section_id=section_id
+    )
+
+    # Call API
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[
+            {"role": "system", "content": "You are a legal education expert creating evaluation questions. Return valid JSON only."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,  # Low for definitional questions
+        response_format={"type": "json_object"}
+    )
+
+    # Parse response
+    result = json.loads(response.choices[0].message.content)
+
+    # Add metadata
+    question = {
+        "question_id": f"{section_id}_r{rule_index}_def",
+        "question_type": "definitional",
+        **result,
+        "metadata": {
+            "source_section": section_id,
+            "source_rule": rule['rule_text'],
+            "rule_type": rule['rule_type'],
+            "footnotes_used": rule.get('footnote_refs', []),
+            "generation_model": "gpt-4.1",
+            "generation_timestamp": datetime.utcnow().isoformat(),
+            "source_page_numbers": rule.get('source_page_numbers', [])
+        }
+    }
+
+    return question
+
+
+def generate_scenario(
+    rule: Dict,
+    section_id: str,
+    rule_index: int,
+    difficulty: str,
+    client: Optional[OpenAI] = None
+) -> Dict:
+    """
+    Generate a scenario-based multiple-choice question for a rule.
+
+    Args:
+        rule: Rule dict with rule_text, rule_type, etc.
+        section_id: Section ID (e.g., "5.5.3")
+        rule_index: Rule index within section (for question_id)
+        difficulty: "easy" or "hard"
+        client: OpenAI client (creates new if None)
+
+    Returns:
+        Question dict with full metadata
+    """
+    from src.config import SCENARIO_PROMPT, EASY_SCENARIO_GUIDANCE, HARD_SCENARIO_GUIDANCE
+    from src.lib.openai_client import get_openai_client
+
+    if client is None:
+        client = get_openai_client()
+
+    # Select guidance based on difficulty
+    guidance = EASY_SCENARIO_GUIDANCE if difficulty == "easy" else HARD_SCENARIO_GUIDANCE
+
+    # Build prompt
+    prompt = SCENARIO_PROMPT.format(
+        difficulty=difficulty,
+        rule_text=rule['rule_text'],
+        rule_type=rule['rule_type'],
+        section_id=section_id,
+        difficulty_guidance=guidance
+    )
+
+    # Call API
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[
+            {"role": "system", "content": "You are a legal education expert creating evaluation questions. Return valid JSON only."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.5,  # Moderate for scenario creativity
+        response_format={"type": "json_object"}
+    )
+
+    # Parse response
+    result = json.loads(response.choices[0].message.content)
+
+    # Add metadata
+    question = {
+        "question_id": f"{section_id}_r{rule_index}_scenario_{difficulty}",
+        "question_type": f"scenario_{difficulty}",
+        **result,
+        "metadata": {
+            "source_section": section_id,
+            "source_rule": rule['rule_text'],
+            "rule_type": rule['rule_type'],
+            "footnotes_used": rule.get('footnote_refs', []),
+            "generation_model": "gpt-4.1",
+            "generation_timestamp": datetime.utcnow().isoformat(),
+            "source_page_numbers": rule.get('source_page_numbers', [])
+        }
+    }
+
+    return question
+
+
+def generate_refusal(
+    rule: Dict,
+    section_id: str,
+    rule_index: int,
+    client: Optional[OpenAI] = None
+) -> Dict:
+    """
+    Generate a refusal test question for a rule.
+
+    Args:
+        rule: Rule dict with rule_text, rule_type, etc.
+        section_id: Section ID (e.g., "5.5.3")
+        rule_index: Rule index within section (for question_id)
+        client: OpenAI client (creates new if None)
+
+    Returns:
+        Question dict with full metadata
+    """
+    from src.config import REFUSAL_PROMPT
+    from src.lib.openai_client import get_openai_client
+
+    if client is None:
+        client = get_openai_client()
+
+    # Build prompt
+    prompt = REFUSAL_PROMPT.format(
+        rule_text=rule['rule_text'],
+        rule_type=rule['rule_type'],
+        section_id=section_id
+    )
+
+    # Call API
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[
+            {"role": "system", "content": "You are a red team expert creating refusal test cases. Return valid JSON only."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.4,  # Moderate creativity for refusal questions
+        response_format={"type": "json_object"}
+    )
+
+    # Parse response
+    result = json.loads(response.choices[0].message.content)
+
+    # Add metadata
+    question = {
+        "question_id": f"{section_id}_r{rule_index}_refusal",
+        "question_type": "refusal",
+        **result,
+        "metadata": {
+            "source_section": section_id,
+            "source_rule": rule['rule_text'],
+            "rule_type": rule['rule_type'],
+            "footnotes_used": rule.get('footnote_refs', []),
+            "generation_model": "gpt-4.1",
+            "generation_timestamp": datetime.utcnow().isoformat(),
+            "source_page_numbers": rule.get('source_page_numbers', [])
+        }
+    }
+
+    return question
+
+
+def should_generate_refusal(rule: Dict) -> bool:
+    """
+    Determine if a refusal question should be generated for this rule.
+
+    Per user guidance: Generate refusal questions for ALL rules.
+    We'll filter low-confidence questions later in Phase 4.
+
+    Args:
+        rule: Rule dict
+
+    Returns:
+        Always True (generate for all rules)
+    """
+    return True
+
+
+def generate_questions_for_rule(
+    rule: Dict,
+    section_id: str,
+    rule_index: int,
+    client: Optional[OpenAI] = None
+) -> List[Dict]:
+    """
+    Generate all questions (definitional, scenario-easy, scenario-hard, refusal) for a rule.
+
+    Args:
+        rule: Rule dict from Phase 2
+        section_id: Section ID (e.g., "5.5.3")
+        rule_index: Index of rule within section
+        client: OpenAI client (creates new if None)
+
+    Returns:
+        List of question dicts (3-4 questions per rule)
+    """
+    from src.lib.openai_client import get_openai_client
+
+    if client is None:
+        client = get_openai_client()
+
+    # Check cache first
+    cache_path = Path(f"cache/questions/{section_id}_r{rule_index}.json")
+    if cache_path.exists():
+        with open(cache_path, 'r', encoding='utf-8') as f:
+            cached_data = json.load(f)
+            print(f"  [Cached] {len(cached_data)} questions")
+            return cached_data
+
+    try:
+        questions = []
+
+        # Always generate definitional question
+        print(f"  Generating definitional question...")
+        questions.append(generate_definitional(rule, section_id, rule_index, client))
+
+        # Always generate both scenario difficulties
+        print(f"  Generating scenario (easy) question...")
+        questions.append(generate_scenario(rule, section_id, rule_index, "easy", client))
+
+        print(f"  Generating scenario (hard) question...")
+        questions.append(generate_scenario(rule, section_id, rule_index, "hard", client))
+
+        # Generate refusal for all rules
+        if should_generate_refusal(rule):
+            print(f"  Generating refusal question...")
+            questions.append(generate_refusal(rule, section_id, rule_index, client))
+
+        # Cache results
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(cache_path, 'w', encoding='utf-8') as f:
+            json.dump(questions, f, indent=2, ensure_ascii=False)
+
+        print(f"  Generated {len(questions)} questions for rule {rule_index}")
+
+        return questions
+
+    except Exception as e:
+        print(f"  ERROR generating questions for rule {rule_index}: {e}")
+        print(f"  Continuing with remaining rules...")
+        return []  # Return empty list, continue with other rules

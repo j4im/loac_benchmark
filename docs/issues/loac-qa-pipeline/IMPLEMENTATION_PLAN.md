@@ -73,30 +73,31 @@ This project follows the plan-then-execute cycle:
 - [x] Manual verification: Tested on Section 5.5, extracted 29 rules with 0 validation warnings
 - [x] Code organization: Refactored into separate files (src/extract.py for parsing, src/rules.py for extraction, src/openai_client.py for client)
 
-**Deliverable**: `src/rules.py` with `extract_rules()` function; `src/openai_client.py` for API client; cached rules in `cache/rules/` + 23 passing tests
+**Deliverable**: `src/rules.py` with `extract_rules()` function; `src/openai_client.py` for API client; `tests/test_rules.py` with 19 comprehensive tests; cached rules in `cache/rules/` + 42 total passing tests
 
 **Completed**: 2025-01-07
 **Actual Commits**: TBD (refactored code organization)
 
 ---
 
-### Phase 3: Question Generation Engine
+### Phase 3: Question Generation Engine ✅ COMPLETE
 **Objective**: Generate all 4 question types for each extracted rule
 
 **Success Criteria**:
-- [ ] Implements `generate_definitional()` with prompt from guidance.md
-- [ ] Implements `generate_scenario()` with easy/hard difficulty modes
-- [ ] Implements `generate_refusal()` with applicability check
-- [ ] Each question includes full provenance metadata (source_section, source_rule, footnotes_used, etc.)
-- [ ] Generates ~4 questions per rule (1 def + 2 scenario + 1 refusal if applicable)
-- [ ] Questions cached immediately after generation
-- [ ] Unit tests in `tests/test_generate.py` (mocking OpenAI calls)
-- [ ] All tests passing
-- [ ] Manual verification: Sample questions are high quality and traceable
+- [x] Implements `generate_definitional()` with prompt from guidance.md
+- [x] Implements `generate_scenario()` with easy/hard difficulty modes
+- [x] Implements `generate_refusal()` with applicability check
+- [x] Each question includes full provenance metadata (source_section, source_rule, footnotes_used, etc.) + confidence field (0-100)
+- [x] Generates 4 questions per rule (1 def + 2 scenario + 1 refusal for ALL rules)
+- [x] Questions cached immediately after generation at rule level
+- [x] Unit tests in `tests/test_generate.py` (mocking OpenAI calls)
+- [x] All tests passing: 64 total (42 from Phases 1-2 + 22 from Phase 3)
+- [x] Manual verification: 20% random sample (21 questions) reviewed - all high quality and traceable
 
-**Deliverable**: `src/generate.py` with all question generation functions + passing tests
+**Deliverable**: `src/pipeline/generate.py` with all question generation functions + passing tests; `data/generated/questions.json` with 108 questions from 27 rules
 
-**Estimated Commits**: 2 (could split into stages 3A: definitional/scenario, 3B: refusal)
+**Completed**: 2025-10-07
+**Actual Commits**: 1 (comprehensive implementation)
 
 ---
 
@@ -192,12 +193,14 @@ This project follows the plan-then-execute cycle:
 ```
 loac/
 ├── src/
-│   ├── extract.py        # PDF parsing (Phase 1)
-│   ├── rules.py          # Rule extraction (Phase 2)
-│   ├── openai_client.py  # OpenAI client setup
-│   ├── generate.py       # Question generation (Phase 3)
-│   ├── validate.py       # Validation pipeline (Phase 4)
-│   └── config.py         # Prompts, templates, constants
+│   ├── lib/
+│   │   └── openai_client.py  # OpenAI client setup
+│   ├── pipeline/
+│   │   ├── parse.py          # PDF parsing (Phase 1)
+│   │   ├── extract.py        # Rule extraction (Phase 2)
+│   │   ├── generate.py       # Question generation (Phase 3)
+│   │   └── validate.py       # Validation pipeline (Phase 4)
+│   └── config.py             # Prompts, templates, constants
 ├── data/
 │   ├── raw/            # Original PDF (symlink or copy)
 │   ├── extracted/      # Parsed sections JSON + rules.json
@@ -208,7 +211,8 @@ loac/
 ├── output/             # Final JSON/CSV exports + eval results
 ├── logs/               # Pipeline execution logs
 ├── tests/
-│   └── test_extract.py # Unit tests (23 tests for Phase 1+2)
+│   ├── test_parse.py   # Unit tests for parsing (23 tests)
+│   └── test_extract.py # Unit tests for rule extraction (19 tests)
 ├── run_pipeline.py     # Main question generation pipeline
 ├── run_eval.py         # Evaluation runner (Phase 6)
 ├── score_eval.py       # AI-as-a-judge scoring (Phase 7)
@@ -236,14 +240,14 @@ dependencies = [
 ## Progress Tracking
 
 ### Current Status
-- **Active Phase**: Phase 3 (Question Generation Engine)
-- **Last Update**: 2025-01-07 - Phase 2 complete with 23 tests passing, 29 rules extracted
-- **Next Step**: Plan Phase 3 detailed implementation
+- **Active Phase**: Phase 4 (Validation & Quality Control) - Ready to plan
+- **Last Update**: 2025-10-07 - Phase 3 complete with 64 tests passing, 108 questions generated from 27 rules
+- **Next Step**: Create PHASE_4_DETAILED.md and ask clarifying questions
 
 ### Completed Phases
-- [x] Phase 1: Project Foundation & PDF Parsing (15/15 tests passing) ✅ 2025-01-07
-- [x] Phase 2: LLM-Based Rule Extraction (23/23 tests passing, 29 rules from Section 5.5) ✅ 2025-01-07
-- [ ] Phase 3: Question Generation Engine
+- [x] Phase 1: Project Foundation & PDF Parsing (15 tests passing) ✅ 2025-01-07
+- [x] Phase 2: LLM-Based Rule Extraction (42 total tests passing: 15+8+19, 29 rules extracted, $0.12 cost) ✅ 2025-01-07
+- [x] Phase 3: Question Generation Engine (64 total tests passing: 42+22, 108 questions from 27 rules) ✅ 2025-10-07
 - [ ] Phase 4: Validation & Quality Control
 - [ ] Phase 5: Orchestration & Export
 - [ ] Phase 6: Evaluation Runner
@@ -274,8 +278,22 @@ dependencies = [
 - **Graceful error handling** (try/except with continue) ensures one bad section doesn't kill entire pipeline
 - **Code organization matters** - separate files for distinct pipeline steps (extract.py for parsing, rules.py for extraction, openai_client.py for client setup)
 - **Mock-based testing** works well for LLM APIs - test logic without API calls, use fixtures for responses
+- **Dedicated test files** improve clarity - `tests/test_rules.py` (19 tests) separate from `tests/test_extract.py` (23 tests) makes test organization clearer
 - **Low temperature (0.1)** produces consistent, deterministic extractions across runs
 - **Source metadata tracking** (section ID, page numbers) attached to every rule enables full provenance
+
+**Phase 3:**
+- **Confidence field is essential** - model can self-assess question quality (avg 90-95 across types), enables filtering low-quality questions in Phase 4
+- **Generate for ALL rules** - don't pre-filter, let model flag issues with confidence scores, filter later
+- **Temperature matters by question type** - definitional (0.3) needs precision, scenarios (0.5) need creativity, refusal (0.4) balanced
+- **Refusal questions should focus on circumvention/violation** - NOT legitimate operational planning (which is acceptable use)
+- **Rule-level caching works well** - cache all 4 questions together, enables resumption mid-pipeline
+- **4 questions per rule scales predictably** - 27 rules → 108 questions (4×27), easy to estimate token costs
+- **API rate limits are the bottleneck** - 27 rules × 4 API calls = ~108 calls, takes 5-10 minutes even with caching
+- **Manual validation via sampling** - 20% random sample (21 questions) sufficient for quality check, comprehensive validation deferred to Phase 4
+- **Metadata propagation critical** - every question carries source_section, source_rule, footnotes, page numbers for full provenance
+- **Question format discipline** - MC questions always have 3 incorrect answers, refusal questions never have incorrect_answers
+- **High confidence scores indicate good prompts** - definitional avg 95, refusal avg 94.3, scenarios avg 90 (slightly lower for harder questions)
 
 ---
 

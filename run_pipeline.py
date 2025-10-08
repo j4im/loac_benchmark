@@ -10,9 +10,9 @@ Usage:
 import argparse
 import json
 from pathlib import Path
-from src.extract import parse_document
-from src.rules import extract_rules
-from src.openai_client import get_openai_client
+from src.pipeline.parse import parse_document
+from src.pipeline.extract import extract_rules
+from src.lib.openai_client import get_openai_client
 
 
 def main():
@@ -76,11 +76,47 @@ def main():
     print(f"\n✓ Extracted {len(all_rules)} total rules")
     print(f"✓ Saved to {rules_output}")
 
-    # Phase 3: Generate questions (coming soon)
-    print("Phase 3: Question generation - Not yet implemented")
+    # Phase 3: Generate questions
+    print("\nPhase 3: Generating questions from rules...")
+    from src.pipeline.generate import generate_questions_for_rule
+    from collections import Counter
+
+    all_questions = []
+
+    # Group rules by section for better organization
+    rules_by_section = {}
+    for rule in all_rules:
+        section_id = rule['source_section']
+        if section_id not in rules_by_section:
+            rules_by_section[section_id] = []
+        rules_by_section[section_id].append(rule)
+
+    # Generate questions for each section's rules
+    for section_id, section_rules in rules_by_section.items():
+        print(f"\nProcessing {section_id}: {len(section_rules)} rules")
+
+        for rule_index, rule in enumerate(section_rules):
+            print(f"  Rule {rule_index + 1}/{len(section_rules)}: {rule['rule_type']}")
+            questions = generate_questions_for_rule(rule, section_id, rule_index, client)
+            all_questions.extend(questions)
+
+    # Save all questions
+    questions_output = Path("data/generated/questions.json")
+    questions_output.parent.mkdir(parents=True, exist_ok=True)
+    with open(questions_output, 'w', encoding='utf-8') as f:
+        json.dump(all_questions, f, indent=2, ensure_ascii=False)
+
+    print(f"\n✓ Generated {len(all_questions)} total questions")
+    print(f"✓ Saved to {questions_output}")
+
+    # Print summary by type
+    type_counts = Counter(q['question_type'] for q in all_questions)
+    print("\nQuestion breakdown:")
+    for qtype, count in sorted(type_counts.items()):
+        print(f"  - {qtype}: {count}")
 
     # Phase 4: Validate (coming soon)
-    print("Phase 4: Validation - Not yet implemented")
+    print("\nPhase 4: Validation - Not yet implemented")
 
     # Phase 5: Export (coming soon)
     print("Phase 5: Export - Not yet implemented")

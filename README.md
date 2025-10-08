@@ -33,7 +33,7 @@ python run_pipeline.py --parse-only
 
 # Or use directly in Python
 uv run python -c "
-from src.extract import parse_document
+from src.pipeline.parse import parse_document
 import json
 sections = parse_document('data/raw/section_5_5.pdf')
 with open('data/extracted/section_5_5.json', 'w') as f:
