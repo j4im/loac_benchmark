@@ -344,4 +344,75 @@ Tests cover:
 - Footnote references captured
 - Output file valid JSON
 
-**Phase 1 Complete**: ✅
+**Phase 1 Complete**: ✅ 2025-01-07
+
+## Final Implementation Summary
+
+**Key Refinements Beyond Original Plan:**
+
+1. **Simplified Text Extraction**
+   - Switched from manual word reconstruction to pdfplumber's `extract_text()` + `crop()`
+   - ~100 lines simpler than original approach
+   - More robust and maintainable
+
+2. **Footnote Handling**
+   - Footnote markers (e.g., "attack.162") preserved in text
+   - Empty `footnotes` field removed from JSON output
+   - Only include fields that are actually used
+
+3. **Multi-Line Section Headers**
+   - Depth-aware parsing:
+     - Level 2 (e.g., 5.5): single-line, all caps, no period
+     - Level 3+ (e.g., 5.5.1): multi-line, period-terminated
+   - Smart splitting: if period found on continuation line, split and preserve remainder as section text
+
+4. **Section Filtering**
+   - Added `--section` CLI flag
+   - Example: `--section 5.5` extracts only 5.5, 5.5.1, 5.5.2, 5.5.3
+   - Excludes fragments from 5.4.8.2 and 5.6 that appear in the PDF excerpt
+
+5. **UTF-8 JSON Output**
+   - `ensure_ascii=False` for readable characters (• instead of \u2022)
+   - `encoding='utf-8'` on file open
+
+6. **Code Organization**
+   - `src/extract.py`: PDF parsing logic with `parse_document(pdf_path, section_prefix)`
+   - `run_pipeline.py`: Orchestration script with CLI args
+   - `tests/test_extract.py`: 15 comprehensive unit tests
+   - Removed: placeholder `main.py`, unnecessary wrapper functions
+
+**Final Output Schema:**
+```json
+{
+  "5.5": {
+    "title": "DISCRIMINATION IN CONDUCTING ATTACKS",
+    "text": "Under the principle of distinction...",
+    "page_numbers": [1, 2],
+    "parent": "5",
+    "children": ["5.5.1", "5.5.2", "5.5.3"]
+  }
+}
+```
+
+**Usage:**
+```bash
+# Extract all sections
+python run_pipeline.py --parse-only
+
+# Extract only 5.5 and children
+python run_pipeline.py --parse-only --section 5.5
+
+# Run tests
+uv run pytest tests/test_extract.py -v
+```
+
+**Test Coverage (15 tests, all passing):**
+- Basic parsing structure
+- Required fields present
+- Section extraction (5.5, 5.5.1, 5.5.2, 5.5.3)
+- Hierarchy relationships
+- Page number tracking
+- Multi-line headers
+- Footnote exclusion
+- Text content integrity
+- Output file validation

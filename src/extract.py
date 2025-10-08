@@ -1,8 +1,7 @@
-"""PDF parsing and rule extraction for LOAC manual."""
+"""PDF parsing for LOAC manual."""
 
 import re
-import json
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 import pdfplumber
 
 
@@ -186,10 +185,3 @@ def _add_hierarchy(sections: Dict) -> Dict:
     return sections
 
 
-def extract_rules(sections: Dict, section_id: str, openai_client) -> List[Dict]:
-    """
-    Extract legal rules from a section using GPT.
-    Will be implemented in Phase 2.
-    """
-    # Placeholder for Phase 2
-    raise NotImplementedError("Rule extraction will be implemented in Phase 2")

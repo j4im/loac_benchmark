@@ -32,43 +32,51 @@ This project follows the plan-then-execute cycle:
 
 ## Phases
 
-### Phase 1: Project Foundation & PDF Parsing
+### Phase 1: Project Foundation & PDF Parsing ✅ COMPLETE
 **Objective**: Set up project structure with `uv` and implement hierarchical PDF parsing
 
 **Success Criteria**:
 - [x] `uv` project initialized with minimal dependencies (pdfplumber, python-dotenv, pytest)
 - [x] Clean directory structure (src/, data/, cache/, output/, tests/)
 - [x] PDF parser extracts sections with hierarchy (section numbers, titles, parent-child)
-- [x] Footnotes captured and associated with sections
+- [x] Footnotes excluded using horizontal rule detection (140px separator)
+- [x] Footnote markers preserved in text (e.g., "attack.162")
 - [x] Page numbers tracked for each section
-- [x] Output: JSON structure matching guidance.md spec
+- [x] Multi-line section headers correctly parsed (level 2 vs level 3+)
+- [x] Section filtering capability (--section flag)
+- [x] UTF-8 JSON output (readable characters)
+- [x] Output: Clean JSON structure (removed empty footnotes field)
 - [x] Unit tests in `tests/test_extract.py` covering parser functions
-- [x] All tests passing: `pytest tests/test_extract.py`
+- [x] All tests passing: `pytest tests/test_extract.py` (15 tests)
 - [x] Manual verification: Parsed Section 5.5 structure is accurate
 
-**Deliverable**: Working `src/extract.py` that parses Section 5.5 PDF into structured JSON + passing tests
+**Deliverable**: Working `src/extract.py` that parses Section 5.5 PDF into structured JSON + `run_pipeline.py` orchestration + 15 passing tests
 
-**Estimated Commits**: 1-2
+**Completed**: 2025-01-07
+**Actual Commits**: 8+ (iterative refinement via TDD)
 
 ---
 
-### Phase 2: LLM-Based Rule Extraction
-**Objective**: Use GPT-4o to extract legal rules from parsed sections
+### Phase 2: LLM-Based Rule Extraction ✅ COMPLETE
+**Objective**: Use GPT-4.1 to extract legal rules from parsed sections
 
 **Success Criteria**:
-- [ ] OpenAI client configured with API key from environment
-- [ ] Rule extraction prompt implemented per guidance.md template
-- [ ] Extracts rules with: rule_text, rule_type, summary, actors, conditions, confidence, footnote_refs
-- [ ] Caching system saves API responses to avoid re-processing
-- [ ] Cost tracking/logging for API usage
-- [ ] Handles token limits gracefully (chunking if needed)
-- [ ] Unit tests in `tests/test_extract.py` for rule extraction (mocking OpenAI calls)
-- [ ] All tests passing
-- [ ] Manual verification: Sample rules are accurately extracted
+- [x] OpenAI client configured with API key from environment (`src/openai_client.py`)
+- [x] Rule extraction prompt implemented with VERBATIM enforcement
+- [x] Extracts rules with: rule_text (verbatim), rule_type, summary, actors, conditions, confidence, footnote_refs
+- [x] Caching system saves API responses to avoid re-processing (`cache/rules/{section_id}.json`)
+- [x] Cost tracking/logging for API usage (token counts and estimated cost per section)
+- [x] Error handling: continues with remaining sections if one fails (graceful degradation)
+- [x] VERBATIM validation: guardrails ensure rule_text is exact quote from source
+- [x] Unit tests in `tests/test_extract.py` for rule extraction (with mocking)
+- [x] All tests passing: 23/23 (15 from Phase 1 + 8 new for Phase 2)
+- [x] Manual verification: Tested on Section 5.5, extracted 29 rules with 0 validation warnings
+- [x] Code organization: Refactored into separate files (src/extract.py for parsing, src/rules.py for extraction, src/openai_client.py for client)
 
-**Deliverable**: `src/extract.py` extended with `extract_rules()` function; cached rules in `cache/rules/` + passing tests
+**Deliverable**: `src/rules.py` with `extract_rules()` function; `src/openai_client.py` for API client; cached rules in `cache/rules/` + 23 passing tests
 
-**Estimated Commits**: 1-2
+**Completed**: 2025-01-07
+**Actual Commits**: TBD (refactored code organization)
 
 ---
 
@@ -184,22 +192,26 @@ This project follows the plan-then-execute cycle:
 ```
 loac/
 ├── src/
-│   ├── extract.py      # PDF parsing + rule extraction
-│   ├── generate.py     # Question generation (all types)
-│   ├── validate.py     # Validation pipeline
-│   └── config.py       # Prompts, templates, constants
+│   ├── extract.py        # PDF parsing (Phase 1)
+│   ├── rules.py          # Rule extraction (Phase 2)
+│   ├── openai_client.py  # OpenAI client setup
+│   ├── generate.py       # Question generation (Phase 3)
+│   ├── validate.py       # Validation pipeline (Phase 4)
+│   └── config.py         # Prompts, templates, constants
 ├── data/
 │   ├── raw/            # Original PDF (symlink or copy)
-│   ├── extracted/      # Parsed sections JSON
+│   ├── extracted/      # Parsed sections JSON + rules.json
 │   └── validated/      # Final validated questions
 ├── cache/
-│   ├── rules/          # Cached rule extractions
+│   ├── rules/          # Cached rule extractions (per section)
 │   └── questions/      # Cached question generations
 ├── output/             # Final JSON/CSV exports + eval results
 ├── logs/               # Pipeline execution logs
+├── tests/
+│   └── test_extract.py # Unit tests (23 tests for Phase 1+2)
 ├── run_pipeline.py     # Main question generation pipeline
-├── run_eval.py         # Evaluation runner
-├── score_eval.py       # AI-as-a-judge scoring
+├── run_eval.py         # Evaluation runner (Phase 6)
+├── score_eval.py       # AI-as-a-judge scoring (Phase 7)
 ├── pyproject.toml      # uv project config
 ├── .env.example        # Environment variable template
 └── README.md           # Usage instructions
@@ -224,13 +236,13 @@ dependencies = [
 ## Progress Tracking
 
 ### Current Status
-- **Active Phase**: Phase 2 (LLM-Based Rule Extraction)
-- **Last Update**: Phase 1 complete with all tests passing
-- **Next Step**: Create PHASE_2_DETAILED.md when ready to execute
+- **Active Phase**: Phase 3 (Question Generation Engine)
+- **Last Update**: 2025-01-07 - Phase 2 complete with 23 tests passing, 29 rules extracted
+- **Next Step**: Plan Phase 3 detailed implementation
 
 ### Completed Phases
-- [x] Phase 1: Project Foundation & PDF Parsing (12/12 tests passing)
-- [ ] Phase 2: LLM-Based Rule Extraction
+- [x] Phase 1: Project Foundation & PDF Parsing (15/15 tests passing) ✅ 2025-01-07
+- [x] Phase 2: LLM-Based Rule Extraction (23/23 tests passing, 29 rules from Section 5.5) ✅ 2025-01-07
 - [ ] Phase 3: Question Generation Engine
 - [ ] Phase 4: Validation & Quality Control
 - [ ] Phase 5: Orchestration & Export
@@ -240,12 +252,30 @@ dependencies = [
 ### Lessons Learned
 
 **Phase 1:**
-- PDF parsing with pdfplumber works well for structured legal documents
-- Multi-line section titles require special handling - stored full text in content, truncated titles acceptable for metadata
-- pytest provides good test structure - used fixtures for shared test data (parsed_sections)
-- uv automatically selected Python 3.9.6 (older than target 3.10+ but compatible)
-- Simple footnote reference extraction sufficient for now - full footnote content can be added later if needed
-- 12 unit tests give good coverage of parsing functionality without over-engineering
+- **pdfplumber's native text extraction** is much simpler than manual word reconstruction - use `extract_text()` with `crop()` to exclude footnotes
+- **Horizontal rule detection** works reliably - 140px width is consistent across all pages, makes perfect separator
+- **Multi-line section headers** need depth-aware parsing:
+  - Level 2 (e.g., 5.5): single-line, all caps, no period
+  - Level 3+ (e.g., 5.5.1): multi-line, period-terminated, need to split remainder text
+- **Footnote markers in text are fine** - LLM can handle "attack.162", no need to strip them
+- **TDD approach works well** - write failing test first, then implement fix (e.g., word order bug)
+- **Keep it simple** - removed empty `footnotes` field, simplified wrapper functions, eliminated unused files
+- **Section filtering is valuable** - `--section 5.5` filters to just 5.5*, excludes fragments from other sections
+- **UTF-8 JSON output** is more readable than escaped Unicode (`ensure_ascii=False`)
+- **uv automatically selected Python 3.9.6** (older than target 3.10+ but compatible)
+- **15 unit tests** provide comprehensive coverage without over-engineering
+
+**Phase 2:**
+- **GPT-4.1 model** works well for structured rule extraction with JSON response format
+- **VERBATIM requirement is critical** - explicitly state "do NOT paraphrase" in prompt AND add validation guardrails
+- **Validation function** that checks extracted text appears in source catches non-verbatim paraphrasing (0 warnings on 29 rules)
+- **Caching at section level** enables fast iteration - second run with cache: instant vs $0.12 API cost
+- **Cost tracking per section** provides transparency - Section 5.5: 4 sections, 29 rules, ~$0.12 total
+- **Graceful error handling** (try/except with continue) ensures one bad section doesn't kill entire pipeline
+- **Code organization matters** - separate files for distinct pipeline steps (extract.py for parsing, rules.py for extraction, openai_client.py for client setup)
+- **Mock-based testing** works well for LLM APIs - test logic without API calls, use fixtures for responses
+- **Low temperature (0.1)** produces consistent, deterministic extractions across runs
+- **Source metadata tracking** (section ID, page numbers) attached to every rule enables full provenance
 
 ---
 

@@ -3,7 +3,10 @@
 import pytest
 import json
 from pathlib import Path
+from unittest.mock import Mock, patch
 from src.extract import parse_document, _add_hierarchy
+from src.rules import extract_rules, validate_verbatim_rules
+from src.openai_client import get_openai_client
 
 
 class TestParsing:
@@ -178,3 +181,165 @@ class TestOutputFormat:
 
         assert isinstance(data, dict)
         assert len(data) > 0
+
+
+class TestRuleExtraction:
+    """Test rule extraction functionality."""
+
+    @pytest.fixture
+    def mock_openai_client(self):
+        """Create a mock OpenAI client."""
+        mock_client = Mock()
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = json.dumps({
+            "rules": [
+                {
+                    "rule_text": "Combatants may make enemy combatants the object of attack.",
+                    "rule_type": "permission",
+                    "summary": "Combatants can target enemy combatants.",
+                    "actors": ["combatants"],
+                    "conditions": "during armed conflict",
+                    "confidence": 95,
+                    "footnote_refs": [160]
+                }
+            ]
+        })
+        mock_response.usage = Mock()
+        mock_response.usage.prompt_tokens = 100
+        mock_response.usage.completion_tokens = 50
+        mock_response.usage.total_tokens = 150
+
+        mock_client.chat.completions.create.return_value = mock_response
+        return mock_client
+
+    @pytest.fixture
+    def sample_section_data(self):
+        """Sample section data for testing."""
+        return {
+            "title": "Test Section",
+            "text": "Combatants may make enemy combatants the object of attack. This is a test.",
+            "page_numbers": [1, 2]
+        }
+
+    def test_extract_rules_returns_list(self, mock_openai_client, sample_section_data, tmp_path):
+        """Test that extract_rules returns a list of rules."""
+        # Use tmp_path to avoid caching interference
+        with patch('src.rules.Path') as mock_path:
+            mock_path.return_value.exists.return_value = False
+
+            rules = extract_rules("test.section", sample_section_data, mock_openai_client)
+
+            assert isinstance(rules, list)
+            assert len(rules) > 0
+
+    def test_extract_rules_has_required_fields(self, mock_openai_client, sample_section_data, tmp_path):
+        """Test that extracted rules have all required fields."""
+        with patch('src.rules.Path') as mock_path:
+            mock_path.return_value.exists.return_value = False
+
+            rules = extract_rules("test.section", sample_section_data, mock_openai_client)
+
+            required_fields = [
+                'rule_text', 'rule_type', 'summary', 'actors',
+                'conditions', 'confidence', 'footnote_refs',
+                'source_section', 'source_page_numbers'
+            ]
+
+            for rule in rules:
+                for field in required_fields:
+                    assert field in rule, f"Rule missing field: {field}"
+
+    def test_extract_rules_adds_source_metadata(self, mock_openai_client, sample_section_data):
+        """Test that source metadata is added to rules."""
+        with patch('src.rules.Path') as mock_path:
+            mock_path.return_value.exists.return_value = False
+
+            rules = extract_rules("5.5.1", sample_section_data, mock_openai_client)
+
+            assert rules[0]['source_section'] == "5.5.1"
+            assert rules[0]['source_page_numbers'] == [1, 2]
+
+    def test_validate_verbatim_accepts_verbatim_text(self):
+        """Test that validate_verbatim_rules accepts verbatim quotes."""
+        source_text = "Combatants may make enemy combatants the object of attack. This is law."
+        rules = [
+            {
+                "rule_text": "Combatants may make enemy combatants the object of attack.",
+                "rule_type": "permission"
+            }
+        ]
+
+        validated = validate_verbatim_rules(rules, source_text)
+
+        assert len(validated) == 1
+        assert '_validation_warning' not in validated[0]
+
+    def test_validate_verbatim_detects_non_verbatim(self):
+        """Test that validate_verbatim_rules detects non-verbatim text."""
+        source_text = "Combatants may make enemy combatants the object of attack."
+        rules = [
+            {
+                "rule_text": "Soldiers can target enemy soldiers.",  # Paraphrased!
+                "rule_type": "permission"
+            }
+        ]
+
+        validated = validate_verbatim_rules(rules, source_text)
+
+        assert len(validated) == 1
+        assert '_validation_warning' in validated[0]
+        assert validated[0]['_validation_warning'] == 'rule_text not found verbatim in source'
+
+    def test_validate_verbatim_handles_whitespace_differences(self):
+        """Test that validation allows minor whitespace differences."""
+        source_text = "Combatants   may\nmake enemy combatants the object of attack."
+        rules = [
+            {
+                "rule_text": "Combatants may make enemy combatants the object of attack.",
+                "rule_type": "permission"
+            }
+        ]
+
+        validated = validate_verbatim_rules(rules, source_text)
+
+        assert len(validated) == 1
+        assert '_validation_warning' not in validated[0]
+
+    def test_extract_rules_handles_api_error(self, sample_section_data):
+        """Test that extract_rules handles API errors gracefully."""
+        mock_client = Mock()
+        mock_client.chat.completions.create.side_effect = Exception("API Error")
+
+        rules = extract_rules("test.section", sample_section_data, mock_client)
+
+        # Should return empty list on error
+        assert isinstance(rules, list)
+        assert len(rules) == 0
+
+    def test_extract_rules_uses_cache(self, mock_openai_client, sample_section_data, tmp_path):
+        """Test that extract_rules uses cached results."""
+        # Create actual cache file in tmp directory
+        cache_dir = tmp_path / "cache" / "rules"
+        cache_dir.mkdir(parents=True)
+        cache_file = cache_dir / "test.section.json"
+
+        cached_rules = [{"rule_text": "Cached rule", "rule_type": "permission"}]
+        with open(cache_file, 'w') as f:
+            json.dump(cached_rules, f)
+
+        # Mock Path to point to our tmp cache file
+        def mock_path_constructor(path_str):
+            if "cache/rules/test.section.json" in str(path_str):
+                return cache_file
+            return Path(path_str)
+
+        with patch('src.rules.Path', side_effect=mock_path_constructor):
+            rules = extract_rules("test.section", sample_section_data, mock_openai_client)
+
+            # Should get cached rules
+            assert len(rules) == 1
+            assert rules[0]['rule_text'] == "Cached rule"
+
+            # API should NOT be called
+            mock_openai_client.chat.completions.create.assert_not_called()

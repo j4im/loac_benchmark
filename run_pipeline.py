@@ -11,6 +11,8 @@ import argparse
 import json
 from pathlib import Path
 from src.extract import parse_document
+from src.rules import extract_rules
+from src.openai_client import get_openai_client
 
 
 def main():
@@ -55,8 +57,24 @@ def main():
         print("\nDone! (parse-only mode)")
         return
 
-    # Phase 2: Extract rules (coming soon)
-    print("\nPhase 2: Rule extraction - Not yet implemented")
+    # Phase 2: Extract rules
+    print("\nPhase 2: Extracting rules from sections...")
+    client = get_openai_client()
+
+    all_rules = []
+
+    for section_id, section_data in sections.items():
+        print(f"Processing {section_id}...")
+        rules = extract_rules(section_id, section_data, client)
+        all_rules.extend(rules)
+
+    # Save all rules
+    rules_output = Path(args.output).parent / "rules.json"
+    with open(rules_output, 'w', encoding='utf-8') as f:
+        json.dump(all_rules, f, indent=2, ensure_ascii=False)
+
+    print(f"\n✓ Extracted {len(all_rules)} total rules")
+    print(f"✓ Saved to {rules_output}")
 
     # Phase 3: Generate questions (coming soon)
     print("Phase 3: Question generation - Not yet implemented")
