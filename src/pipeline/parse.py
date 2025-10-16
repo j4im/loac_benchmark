@@ -2,6 +2,7 @@
 
 import re
 from typing import Dict, Optional
+
 import pdfplumber
 
 
@@ -28,7 +29,7 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
 
     # Pattern to match section headers: number followed by any text
     # Capitalization-agnostic, accepts any punctuation or none
-    section_header_pattern = re.compile(r'^\s*(\d+(?:\.\d+)+)\s+(.+?)\s*$')
+    section_header_pattern = re.compile(r"^\s*(\d+(?:\.\d+)+)\s+(.+?)\s*$")
 
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages, start=1):
@@ -48,7 +49,7 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
             if not text:
                 continue
 
-            lines = text.split('\n')
+            lines = text.split("\n")
 
             i = 0
             while i < len(lines):
@@ -63,9 +64,9 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
                     # Save previous section if exists
                     if current_section_id:
                         sections[current_section_id] = {
-                            'title': current_section_title,
-                            'text': '\n'.join(current_section_text).strip(),
-                            'page_numbers': sorted(list(current_section_pages))
+                            "title": current_section_title,
+                            "text": "\n".join(current_section_text).strip(),
+                            "page_numbers": sorted(list(current_section_pages)),
                         }
 
                     # Start new section
@@ -73,7 +74,7 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
                     title = match.group(2).strip()
 
                     # Determine section depth (count dots)
-                    section_depth = current_section_id.count('.')
+                    section_depth = current_section_id.count(".")
 
                     # Level 3+ sections (e.g., 5.5.1): multi-line, period-terminated
                     # Level 2 sections (e.g., 5.5): single-line, all caps, no period
@@ -83,11 +84,11 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
                             next_line = lines[i + 1].strip()
                             if next_line and not section_header_pattern.match(next_line):
                                 # If next line has a period, split on it
-                                if '.' in next_line:
-                                    period_idx = next_line.index('.')
-                                    title = title + ' ' + next_line[:period_idx + 1]
+                                if "." in next_line:
+                                    period_idx = next_line.index(".")
+                                    title = title + " " + next_line[: period_idx + 1]
                                     # Put the remainder back for processing as section text
-                                    remainder = next_line[period_idx + 1:].strip()
+                                    remainder = next_line[period_idx + 1 :].strip()
                                     if remainder:
                                         lines[i + 1] = remainder
                                         # Don't increment i - let outer loop process the remainder
@@ -95,11 +96,11 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
                                         i += 1  # Skip empty line after period
                                 else:
                                     # No period, just append whole line
-                                    title = title + ' ' + next_line
+                                    title = title + " " + next_line
                                     i += 1  # Move past the line we consumed
 
                     # Remove trailing period if present
-                    current_section_title = title.rstrip('.')
+                    current_section_title = title.rstrip(".")
                     current_section_text = []
                     current_section_pages = {page_num}
                 else:
@@ -113,9 +114,9 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
         # Save last section
         if current_section_id:
             sections[current_section_id] = {
-                'title': current_section_title,
-                'text': '\n'.join(current_section_text).strip(),
-                'page_numbers': sorted(list(current_section_pages))
+                "title": current_section_title,
+                "text": "\n".join(current_section_text).strip(),
+                "page_numbers": sorted(list(current_section_pages)),
             }
 
     # Filter sections by prefix if specified
@@ -123,7 +124,7 @@ def parse_document(pdf_path: str, section_prefix: Optional[str] = None) -> Dict:
         sections = {
             section_id: section_data
             for section_id, section_data in sections.items()
-            if section_id == section_prefix or section_id.startswith(section_prefix + '.')
+            if section_id == section_prefix or section_id.startswith(section_prefix + ".")
         }
 
     # Add parent-child relationships
@@ -147,41 +148,37 @@ def _find_footnote_separator(page) -> Optional[float]:
     # The footnote separator is exactly 140px wide on every page
     # (wider lines are underlines/decorations)
     for rect in rects:
-        is_thin = rect['height'] < 5
-        is_black = rect.get('non_stroking_color', rect.get('stroking_color')) == 0
-        is_footnote_separator = abs(rect['width'] - 140.0) < 1  # 140px ±1px tolerance
+        is_thin = rect["height"] < 5
+        is_black = rect.get("non_stroking_color", rect.get("stroking_color")) == 0
+        is_footnote_separator = abs(rect["width"] - 140.0) < 1  # 140px ±1px tolerance
 
         if is_thin and is_black and is_footnote_separator:
             # Found the footnote separator
-            return rect['top']
+            return rect["top"]
 
     return None
-
-
 
 
 def _add_hierarchy(sections: Dict) -> Dict:
     """Add parent and children fields to create hierarchy."""
     for section_id in sections.keys():
         # Determine parent (e.g., "5.5.1.1" -> parent is "5.5.1")
-        parts = section_id.split('.')
+        parts = section_id.split(".")
         if len(parts) > 2:  # Has a parent beyond root
-            parent_id = '.'.join(parts[:-1])
-            sections[section_id]['parent'] = parent_id
+            parent_id = ".".join(parts[:-1])
+            sections[section_id]["parent"] = parent_id
         elif len(parts) == 2:
             # Top level section like "5.5"
-            sections[section_id]['parent'] = parts[0]
+            sections[section_id]["parent"] = parts[0]
 
         # Find children
         children = []
         for other_id in sections.keys():
-            other_parts = other_id.split('.')
+            other_parts = other_id.split(".")
             # Check if other_id is a direct child
-            if len(other_parts) == len(parts) + 1 and other_id.startswith(section_id + '.'):
+            if len(other_parts) == len(parts) + 1 and other_id.startswith(section_id + "."):
                 children.append(other_id)
 
-        sections[section_id]['children'] = sorted(children)
+        sections[section_id]["children"] = sorted(children)
 
     return sections
-
-

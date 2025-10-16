@@ -1,10 +1,11 @@
 """CLI entry point for LOAC QA Pipeline."""
 
 import sys
-from src.cli.parser import parse_args
-from src.cli.commands import cmd_parse, cmd_rules, cmd_questions, cmd_validate, cmd_all
-from src.cli.utils import clean_cache_by_command
+
 import src.cli.utils as cli_utils
+from src.cli.commands import cmd_all, cmd_eval, cmd_parse, cmd_questions, cmd_rules, cmd_validate
+from src.cli.parser import parse_args
+from src.cli.utils import clean_cache_by_command
 
 
 def main(argv=None):
@@ -35,19 +36,20 @@ def main(argv=None):
         if args.clean_cache:
             clean_cache_by_command(
                 args.command,
-                section=getattr(args, 'section', None),
-                rule_id=getattr(args, 'rule_id', None),
-                question_id=getattr(args, 'question_id', None)
+                section=getattr(args, "section", None),
+                rule_id=getattr(args, "rule_id", None),
+                question_id=getattr(args, "question_id", None),
             )
             return 0
 
         # Route to command handler
         command_handlers = {
-            'parse': cmd_parse,
-            'rules': cmd_rules,
-            'questions': cmd_questions,
-            'validate': cmd_validate,
-            'all': cmd_all,
+            "parse": cmd_parse,
+            "rules": cmd_rules,
+            "questions": cmd_questions,
+            "validate": cmd_validate,
+            "eval": cmd_eval,
+            "all": cmd_all,
         }
 
         handler = command_handlers.get(args.command)
@@ -65,9 +67,10 @@ def main(argv=None):
         print(f"Error: {e}", file=sys.stderr)
         if cli_utils.VERBOSE_MODE:
             import traceback
+
             traceback.print_exc()
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

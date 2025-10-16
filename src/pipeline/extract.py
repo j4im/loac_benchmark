@@ -3,13 +3,12 @@
 import json
 from pathlib import Path
 from typing import Dict, List, Optional
+
 from openai import OpenAI
 
 
 def extract_rules(
-    section_id: str,
-    section_data: Dict,
-    client: Optional[OpenAI] = None
+    section_id: str, section_data: Dict, client: Optional[OpenAI] = None
 ) -> List[Dict]:
     """
     Extract legal rules from a section using GPT-4.1.
@@ -30,22 +29,23 @@ def extract_rules(
 
     # Check cache first (unless ignore_cache flag is set)
     from src.cli.utils import should_use_cache
+
     cache_path = Path(f"cache/rules/{section_id}.json")
     if should_use_cache() and cache_path.exists():
-        with open(cache_path, 'r', encoding='utf-8') as f:
+        with open(cache_path, "r", encoding="utf-8") as f:
             cached_data = json.load(f)
             # Add rule_id if missing (backward compatibility)
             for index, rule in enumerate(cached_data):
-                if 'rule_id' not in rule:
-                    rule['rule_id'] = f"{section_id}_r{index}"
+                if "rule_id" not in rule:
+                    rule["rule_id"] = f"{section_id}_r{index}"
             print(f"  [Cached] {len(cached_data)} rules")
             return cached_data
 
     # Build prompt
     prompt = RULE_EXTRACTION_PROMPT.format(
         section_id=section_id,
-        section_title=section_data['title'],
-        section_text=section_data['text']
+        section_title=section_data["title"],
+        section_text=section_data["text"],
     )
 
     try:
@@ -55,45 +55,49 @@ def extract_rules(
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a legal analyst extracting rules from legal documents. Return valid JSON only."
+                    "content": "You are a legal analyst extracting rules from legal documents. Return valid JSON only.",
                 },
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": prompt},
             ],
             temperature=0.1,  # Low temperature for consistency
-            response_format={"type": "json_object"}
+            response_format={"type": "json_object"},
         )
 
         # Parse response
-        result = json.loads(response.choices[0].message.content)
+        from src.pipeline.util import parse_llm_json_response
+
+        result = parse_llm_json_response(response)
         rules = result.get("rules", [])
 
         # Validate that rules are verbatim
-        rules = validate_verbatim_rules(rules, section_data['text'])
+        rules = validate_verbatim_rules(rules, section_data["text"])
 
         # Add source metadata and rule_id to each rule
         for index, rule in enumerate(rules):
-            rule['rule_id'] = f"{section_id}_r{index}"
-            rule['source_section'] = section_id
-            rule['source_page_numbers'] = section_data['page_numbers']
+            rule["rule_id"] = f"{section_id}_r{index}"
+            rule["source_section"] = section_id
+            rule["source_page_numbers"] = section_data["page_numbers"]
 
         # Log token usage
         usage = response.usage
         cost = estimate_cost(usage)
-        print(f"  Tokens: {usage.total_tokens} (input: {usage.prompt_tokens}, output: {usage.completion_tokens})")
+        print(
+            f"  Tokens: {usage.total_tokens} (input: {usage.prompt_tokens}, output: {usage.completion_tokens})"
+        )
         print(f"  Cost: ${cost:.4f}")
         print(f"  Extracted: {len(rules)} rules")
 
         # Cache result (unless ignore_cache flag is set)
         if should_use_cache():
             cache_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(cache_path, 'w', encoding='utf-8') as f:
+            with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(rules, f, indent=2, ensure_ascii=False)
 
         return rules
 
     except Exception as e:
         print(f"  ERROR extracting rules from {section_id}: {e}")
-        print(f"  Continuing with remaining sections...")
+        print("  Continuing with remaining sections...")
         return []  # Return empty list, continue with other sections
 
 
@@ -124,17 +128,17 @@ def validate_verbatim_rules(rules: List[Dict], source_text: str) -> List[Dict]:
     validated_rules = []
 
     for rule in rules:
-        rule_text = rule.get('rule_text', '')
+        rule_text = rule.get("rule_text", "")
 
         # Check if rule_text appears verbatim in source
         # Allow for minor whitespace differences
-        normalized_source = ' '.join(source_text.split())
-        normalized_rule = ' '.join(rule_text.split())
+        normalized_source = " ".join(source_text.split())
+        normalized_rule = " ".join(rule_text.split())
 
         if normalized_rule not in normalized_source:
             # Flag as non-verbatim
             print(f"  WARNING: Non-verbatim rule detected: {rule_text[:50]}...")
-            rule['_validation_warning'] = 'rule_text not found verbatim in source'
+            rule["_validation_warning"] = "rule_text not found verbatim in source"
 
         validated_rules.append(rule)
 

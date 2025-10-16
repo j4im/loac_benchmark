@@ -101,7 +101,7 @@ This project follows the plan-then-execute cycle:
 
 ---
 
-### Phase 4: Validation & Quality Control 🔄 REFINING
+### Phase 4: Validation & Quality Control ✅ COMPLETE
 **Objective**: Automated validation pipeline with quality scoring
 
 **Success Criteria**:
@@ -115,61 +115,80 @@ This project follows the plan-then-execute cycle:
 - [x] All tests passing
 - [x] Manual verification: Low-quality questions are correctly filtered out
 
-**Deliverable**: `src/pipeline/validate.py` (548 lines) + `tests/test_validate.py` (362 lines, 23 tests) + 7 validation prompts in config.py
+**Deliverable**: `src/pipeline/validate.py` (800+ lines) + `tests/test_validate.py` (23 tests) + 8 validation prompts in config.py + integrated analysis reporting
 
 **Initial Completion**: 2025-10-15
-**Initial Results**: 86/124 questions validated (69.4%), 38 quality failures, 0 structural failures, 85 total tests passing
+**Initial Results**: 86/124 questions validated (69.4%), 38 quality failures, 0 structural failures
 
 **Critical Refactoring 1 (Anchoring Fix)**: Discovered severe prompt anchoring bias (100% validation with uniform scores). Fixed with:
-1. Dual-example prompts (HIGH QUALITY: 95, LOW QUALITY: 50) in all 7 prompts
+1. Dual-example prompts (HIGH QUALITY: 95, LOW QUALITY: 50) in all 8 prompts
 2. Second-worst (median) distractor scoring instead of average
 3. Simplified threshold: ALL components ≥90% (removed complex weighted scoring)
 
 See `PHASE_4_REFACTOR_SUMMARY.md` for detailed analysis of anchoring discovery and fix.
 
-**Critical Refactoring 2 (Refusal Question Fix - IN PROGRESS)**: All 31 refusal questions failing validation (0% pass rate). Root cause: question_entailment check inappropriate for adversarial questions. Fixes:
+**Critical Refactoring 2 (Refusal Question Fix)** ✅ COMPLETE (2025-10-16): Fixed 0% refusal validation rate. Changes:
 1. Skip question_entailment validation for refusal questions (they're adversarial by design)
-2. Update REFUSAL_VALIDATION_PROMPT to check circumvention "of the Source Rule" (maintains entailment in adversarial context)
-3. Add full section text context to all 8 prompts (not just isolated rule text)
+2. Add full section text context to all 8 prompts (not just isolated rule text)
+3. DRY refactoring: consolidated `_load_section_text()` into `src/cli/utils.py`
+4. Integrated validation analysis generation into pipeline
+5. Manual validation review: 17 rejected questions (all legitimate quality issues), 10% sample of validated questions (all high quality)
 
-**Expected Results**: 85-90% overall validation rate (MC: ~90%, Refusal: ~85%)
+**Final Results**: 107/124 questions validated (86.3%), 17 rejected (10 due to upstream rule confidence, 7 due to quality issues), 31/31 refusal questions passing ✅
+
+**Completed**: 2025-10-16
+**Actual Commits**: 2 (initial implementation + refusal fixes)
 
 ---
 
-### Phase 5: Orchestration & Export
-**Objective**: Main pipeline script and CSV export from template
+### Phase 5: CLI Refactoring & Pipeline Orchestration ✅ COMPLETE
+**Objective**: Transform monolithic script into production-grade git-style CLI with subcommands
 
 **Success Criteria**:
-- [ ] `run_pipeline.py` orchestrates all phases end-to-end
-- [ ] Handles interruptions gracefully (resume from cache)
-- [ ] Exports validated questions to JSON (`output/questions.json`)
-- [ ] CSV export using pre-existing template format
-- [ ] Coverage statistics report (rules covered, question types, etc.)
-- [ ] Logging to `logs/` for debugging
-- [ ] Basic integration test in `tests/test_pipeline.py`
-- [ ] Tests passing
-- [ ] Manual verification: Full pipeline runs successfully on Section 5.5
+- [x] Git-style CLI with 5 subcommands: `all`, `parse`, `rules`, `questions`, `validate`
+- [x] Global options work across all commands: `--verbose`, `--dry-run`, `--clean-cache`, `--ignore-cache`
+- [x] `--dry-run` mode prints LLM prompts without API calls
+- [x] `--verbose` mode logs all LLM interactions (no truncation)
+- [x] Filtering works: `--section PREFIX`, `--rule-id PATTERN`, `--question-id PATTERN`
+- [x] Rule IDs added during Phase 2 (format: `{section}_r{index}`)
+- [x] Backward compatible with existing data files
+- [x] All existing tests still pass
+- [x] New tests for CLI functionality in `tests/test_cli.py`
+- [x] Help text (`-h`) clear and comprehensive for each command
 
-**Deliverable**: Working `run_pipeline.py`; sample output files + passing tests
+**Deliverable**: `src/cli/` module (4 files: `__init__.py`, `parser.py`, `commands.py`, `utils.py`) + refactored `run_pipeline.py` + `tests/test_cli.py` + comprehensive help text
 
-**Estimated Commits**: 1-2
+**Key Features Implemented**:
+- Subcommand architecture following git/docker patterns
+- PDF argument defaults to `data/raw/section_5_5.pdf`
+- Dry-run mode implies cache disabled
+- Verbose output shows full LLM prompts/responses
+- `data/` directory added to `.gitignore`
+- DRY refactoring: `load_section_text()` utility function
+- Integrated validation analysis reporting
+
+**Completed**: 2025-10-16
+**Actual Commits**: TBD (pending commit)
 
 ---
 
 ### Phase 6: Evaluation Runner
-**Objective**: Run GPT-4o through the generated evaluation questions
+**Objective**: Run target model through validated evaluation questions
 
 **Success Criteria**:
-- [ ] Script runs model (GPT-4o) through each question in the question bank
-- [ ] For multiple-choice questions: model selects answer from options
-- [ ] For refusal questions: model provides response (should refuse)
-- [ ] Responses saved with question metadata for analysis
-- [ ] Handles rate limits gracefully
-- [ ] Basic test in `tests/test_eval.py`
-- [ ] Tests passing
-- [ ] Manual verification: Spot-check that responses are captured correctly
+- [ ] `eval` CLI subcommand implemented following existing patterns
+- [ ] Supports `--model` option (passes to OpenAI API, default: gpt-4o)
+- [ ] For MC questions: presents shuffled options, model responds with JSON selection
+- [ ] For refusal questions: model responds with JSON (includes optional refusal)
+- [ ] Unified JSON response format for all question types
+- [ ] Deterministic option shuffling (single hardcoded seed)
+- [ ] Responses cached per question (enables resumption)
+- [ ] Output saved to `data/evaluation/eval_responses.json`
+- [ ] JSON parsing utility consolidation (if duplicate code exists)
+- [ ] Tests in `tests/test_eval.py`
+- [ ] All tests passing
 
-**Deliverable**: `run_eval.py` script; responses saved to `output/eval_responses.json` + passing tests
+**Deliverable**: `src/pipeline/evaluate.py` + `eval` CLI command + tests; evaluation responses in `data/evaluation/`
 
 **Estimated Commits**: 1
 
@@ -192,6 +211,58 @@ See `PHASE_4_REFACTOR_SUMMARY.md` for detailed analysis of anchoring discovery a
 **Deliverable**: `score_eval.py` script; scoring report in `output/eval_report.json` and human-readable summary + passing tests
 
 **Estimated Commits**: 1
+
+---
+
+### Phase 8: Export & Format Conversion
+**Objective**: Package validated questions for distribution and external use
+
+**Success Criteria**:
+- [ ] CSV export using pre-existing template format (if available)
+- [ ] JSON export with full metadata (provenance, validation scores, timestamps)
+- [ ] Coverage statistics report (rules covered, question types distribution, validation metrics)
+- [ ] Export filtering by question type, section, quality score
+- [ ] Compressed archive generation for distribution
+- [ ] Integration tests for full pipeline end-to-end
+- [ ] Tests passing
+- [ ] Manual verification: Exports are clean and usable
+
+**Deliverable**: Export utilities in `src/export.py`; sample exports in `output/`; integration tests in `tests/test_integration.py`
+
+**Estimated Commits**: 1-2
+
+---
+
+### Phase 9: Final Housekeeping & Documentation
+**Objective**: Prepare repository for future users and maintainers
+
+**Success Criteria**:
+- [ ] Comprehensive README.md with:
+  - Project overview and goals
+  - Installation instructions
+  - Complete CLI usage guide with examples
+  - Architecture documentation
+  - Troubleshooting section
+- [ ] Code cleanup:
+  - Remove temporary/test scripts
+  - Clean up comments and TODOs
+  - Verify consistent code style
+- [ ] Documentation audit:
+  - All phase plans current
+  - IMPLEMENTATION_PLAN.md finalized
+  - Add CONTRIBUTING.md if needed
+- [ ] Final validation:
+  - All tests passing
+  - Full pipeline runs successfully
+  - Sample data generation complete
+- [ ] Repository polish:
+  - Appropriate .gitignore entries
+  - LICENSE file (if needed)
+  - Clean git history
+
+**Deliverable**: Production-ready repository with comprehensive documentation
+
+**Estimated Commits**: 2-3
 
 ---
 
@@ -255,19 +326,21 @@ dependencies = [
 ## Progress Tracking
 
 ### Current Status
-- **Active Phase**: Phase 4 (Refusal Question Refinement) - Fixing 100% refusal rejection rate
-- **Last Update**: 2025-10-15 - Refining refusal validation to skip question_entailment, add section context
-- **Next Step**: Complete refusal validation fixes, re-run validation, expect ~85-90% overall validation rate
+- **Active Phase**: Phase 6 (Evaluation Runner) - Planning complete, ready for execution
+- **Last Update**: 2025-10-16 - Phase 5 complete, Phase 6 planned, tests passing 135/135 (100%)
+- **Next Step**: Execute Phase 6, then plan Phase 7 & 8 (detailed plans not yet created)
 
 ### Completed Phases
 - [x] Phase 1: Project Foundation & PDF Parsing (15 tests passing) ✅ 2025-01-07
 - [x] Phase 2: LLM-Based Rule Extraction (42 total tests passing: 15+8+19, 29 rules extracted, $0.12 cost) ✅ 2025-01-07
 - [x] Phase 3: Question Generation Engine (64 total tests passing: 42+22, 124 questions from 31 rules) ✅ 2025-10-07
-- [x] Phase 4: Validation & Quality Control (85 total tests passing, 86/124 validated at 90% threshold) ✅ 2025-10-15
-  - **Refactored**: Fixed prompt anchoring with dual examples, simplified to 90% threshold, second-worst distractor scoring
-- [ ] Phase 5: CLI Refactoring (PHASE_5_DETAILED.md complete)
+- [x] Phase 4: Validation & Quality Control (85 total tests passing, 107/124 validated - 86.3%) ✅ 2025-10-16
+  - **Refactored**: Fixed prompt anchoring, added section context, fixed refusal validation, DRY refactoring
+- [x] Phase 5: CLI Refactoring & Pipeline Orchestration (git-style CLI with 5 subcommands, filtering, verbose/dry-run modes) ✅ 2025-10-16
 - [ ] Phase 6: Evaluation Runner
 - [ ] Phase 7: AI-as-a-Judge Scoring
+- [ ] Phase 8: Export & Format Conversion
+- [ ] Phase 9: Final Housekeeping & Documentation
 
 ### Lessons Learned
 
@@ -331,12 +404,25 @@ dependencies = [
 - **Test coverage with mocking** - 23 comprehensive tests without API calls verify logic independently
 - **Validation metadata preserved** - full validation breakdown attached to each question for transparency and debugging
 
+**Phase 5:**
+- **Git-style CLI is intuitive** - Subcommand architecture (all, parse, rules, questions, validate) mirrors familiar tools and is easy to learn
+- **Global options enhance workflow** - `--verbose`, `--dry-run`, `--clean-cache`, `--ignore-cache` work across all commands
+- **Filtering is powerful** - Glob patterns for `--section`, `--rule-id`, `--question-id` enable targeted processing
+- **Dry-run mode invaluable for debugging** - Seeing prompts without API calls saves time and money during development
+- **Verbose mode needs full output** - Truncating responses hides crucial information; full output is better
+- **Rule IDs enable granular control** - Format `{section}_r{index}` (e.g., "5.5_r0") makes it easy to target specific rules
+- **Defaults matter for UX** - PDF defaulting to `data/raw/section_5_5.pdf` reduces friction
+- **DRY principles pay off** - Consolidating `load_section_text()` into `src/cli/utils.py` avoided duplication across modules
+- **Integrated analysis is convenient** - Auto-generating `validation_analysis.txt` during validation provides immediate insights
+- **Backward compatibility is easy** - Existing data files work without changes; optional features don't break old workflows
+- **Help text is documentation** - Clear `--help` for each command reduces need to check external docs
+
 ---
 
 ## Success Metrics
 
 - **Coverage**: >90% of identified rules have at least one question ✅ **Achieved: 100%** (31 rules → 124 questions, 4 per rule)
-- **Quality**: >80% of generated questions pass validation ✅ **Achieved: 69.4%** (86/124 validated at 90% threshold after fixing prompt anchoring)
+- **Quality**: >80% of generated questions pass validation ✅ **Achieved: 86.3%** (107/124 validated at 90% threshold after all refactoring)
 - **Diversity**: Balanced distribution across question types ✅ **Achieved: Perfect balance** (31 of each type)
 - **Provenance**: 100% of questions traceable to source text with section + page numbers ✅ **Achieved: 100%** (full metadata tracking)
 - **Cost**: <$0.50 per validated question ✅ **Achieved: ~$0.25 per question** (estimated $30-35 total for 124 questions)

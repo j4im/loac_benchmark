@@ -3,10 +3,9 @@
 import fnmatch
 import json
 import sys
-from pathlib import Path
-from typing import Dict, List, Any, Optional
 from datetime import datetime
-
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Global flags for runtime behavior
 VERBOSE_MODE = False
@@ -50,14 +49,16 @@ def filter_rules(rules: List[Dict[str, Any]], pattern: Optional[str]) -> List[Di
 
     filtered = []
     for rule in rules:
-        rule_id = rule.get('rule_id', '')
+        rule_id = rule.get("rule_id", "")
         if fnmatch.fnmatch(rule_id, pattern):
             filtered.append(rule)
 
     return filtered
 
 
-def filter_questions(questions: List[Dict[str, Any]], pattern: Optional[str]) -> List[Dict[str, Any]]:
+def filter_questions(
+    questions: List[Dict[str, Any]], pattern: Optional[str]
+) -> List[Dict[str, Any]]:
     """Filter questions by question_id glob pattern.
 
     Args:
@@ -72,7 +73,7 @@ def filter_questions(questions: List[Dict[str, Any]], pattern: Optional[str]) ->
 
     filtered = []
     for question in questions:
-        question_id = question.get('question_id', '')
+        question_id = question.get("question_id", "")
         if fnmatch.fnmatch(question_id, pattern):
             filtered.append(question)
 
@@ -86,47 +87,8 @@ def log_verbose(message: str):
         message: Message to print
     """
     if VERBOSE_MODE or DRY_RUN_MODE:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] {message}", file=sys.stderr)
-
-
-def log_llm_call(model: str, prompt: str, response: Optional[str] = None,
-                 tokens: Optional[int] = None, cost: Optional[float] = None):
-    """Log LLM call details in verbose mode.
-
-    Args:
-        model: Model name
-        prompt: Prompt text (will be truncated if long)
-        response: Response text (optional)
-        tokens: Token count (optional)
-        cost: Estimated cost in USD (optional)
-    """
-    if not (VERBOSE_MODE or DRY_RUN_MODE):
-        return
-
-    # Truncate prompt for readability
-    # prompt_preview = prompt[:500] + ('...' if len(prompt) > 500 else '')
-    prompt_preview = prompt
-
-    print("=" * 80, file=sys.stderr)
-    print(f"LLM CALL: {model}", file=sys.stderr)
-    print("-" * 80, file=sys.stderr)
-    print("PROMPT:", file=sys.stderr)
-    print(prompt_preview, file=sys.stderr)
-
-    if response:
-        print("-" * 80, file=sys.stderr)
-        print("RESPONSE:", file=sys.stderr)
-        print(response, file=sys.stderr)
-
-    if tokens or cost:
-        print("-" * 80, file=sys.stderr)
-        if tokens:
-            print(f"Tokens: {tokens}", file=sys.stderr)
-        if cost:
-            print(f"Estimated cost: ${cost:.4f}", file=sys.stderr)
-
-    print("=" * 80, file=sys.stderr)
 
 
 def clean_cache_dir(cache_dir: str, pattern: Optional[str] = None):
@@ -144,14 +106,14 @@ def clean_cache_dir(cache_dir: str, pattern: Optional[str] = None):
     deleted_count = 0
     if pattern:
         # Filter by pattern
-        for cache_file in cache_path.glob('*.json'):
+        for cache_file in cache_path.glob("*.json"):
             if fnmatch.fnmatch(cache_file.stem, pattern):
                 cache_file.unlink()
                 deleted_count += 1
                 print(f"Deleted: {cache_file}")
     else:
         # Delete all
-        for cache_file in cache_path.glob('*.json'):
+        for cache_file in cache_path.glob("*.json"):
             cache_file.unlink()
             deleted_count += 1
             print(f"Deleted: {cache_file}")
@@ -162,8 +124,12 @@ def clean_cache_dir(cache_dir: str, pattern: Optional[str] = None):
         print(f"Deleted {deleted_count} cache file(s) from {cache_dir}")
 
 
-def clean_cache_by_command(command: str, section: Optional[str] = None,
-                           rule_id: Optional[str] = None, question_id: Optional[str] = None):
+def clean_cache_by_command(
+    command: str,
+    section: Optional[str] = None,
+    rule_id: Optional[str] = None,
+    question_id: Optional[str] = None,
+):
     """Clean cache based on command and filters.
 
     Args:
@@ -174,29 +140,29 @@ def clean_cache_by_command(command: str, section: Optional[str] = None,
     """
     print(f"Cleaning cache for command: {command}")
 
-    if command == 'parse' or command == 'all':
-        clean_cache_dir('cache/parse')
+    if command == "parse" or command == "all":
+        clean_cache_dir("cache/parse")
 
-    if command == 'rules' or command == 'all':
+    if command == "rules" or command == "all":
         if section:
             # Filter cache files by section prefix
-            clean_cache_dir('cache/rules', pattern=f"{section}*")
+            clean_cache_dir("cache/rules", pattern=f"{section}*")
         else:
-            clean_cache_dir('cache/rules')
+            clean_cache_dir("cache/rules")
 
-    if command == 'questions' or command == 'all':
+    if command == "questions" or command == "all":
         if rule_id:
             # Filter cache files by rule_id pattern
-            clean_cache_dir('cache/questions', pattern=f"{rule_id}*")
+            clean_cache_dir("cache/questions", pattern=f"{rule_id}*")
         else:
-            clean_cache_dir('cache/questions')
+            clean_cache_dir("cache/questions")
 
-    if command == 'validate' or command == 'all':
+    if command == "validate" or command == "all":
         if question_id:
             # Filter cache files by question_id pattern
-            clean_cache_dir('cache/validation', pattern=f"{question_id}*")
+            clean_cache_dir("cache/validation", pattern=f"{question_id}*")
         else:
-            clean_cache_dir('cache/validation')
+            clean_cache_dir("cache/validation")
 
 
 def should_use_cache() -> bool:
@@ -225,7 +191,7 @@ def load_json_file(filepath: str) -> Any:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {filepath}")
 
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -239,7 +205,7 @@ def save_json_file(data: Any, filepath: str):
     path = Path(filepath)
     path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     log_verbose(f"Saved to {filepath}")
@@ -254,10 +220,10 @@ def print_summary(title: str, stats: Dict[str, Any]):
     """
     print(f"\n{'=' * 60}")
     print(title.center(60))
-    print('=' * 60)
+    print("=" * 60)
     for key, value in stats.items():
         print(f"{key}: {value}")
-    print('=' * 60)
+    print("=" * 60)
 
 
 def load_section_text(section_id: str) -> str:
@@ -273,18 +239,15 @@ def load_section_text(section_id: str) -> str:
         Section text, or empty string if not found
     """
     # Try multiple locations for sections file
-    sections_paths = [
-        'data/extracted/sections.json',
-        'data/extracted/section_5_5.json'
-    ]
+    sections_paths = ["data/extracted/sections.json", "data/extracted/section_5_5.json"]
 
     for path_str in sections_paths:
         path = Path(path_str)
         if path.exists():
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 sections = json.load(f)
                 if section_id in sections:
-                    return sections[section_id].get('text', '')
+                    return sections[section_id].get("text", "")
 
     # If not found, return empty string
     return ""

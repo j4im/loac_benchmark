@@ -7,8 +7,8 @@ import sys
 def create_parser():
     """Create the main argument parser with subcommands."""
     parser = argparse.ArgumentParser(
-        prog='run_pipeline',
-        description='LOAC QA Pipeline - Generate evaluation questions from legal documents',
+        prog="run_pipeline",
+        description="LOAC QA Pipeline - Generate evaluation questions from legal documents",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -24,168 +24,170 @@ Examples:
   # Validate with verbose logging
   run_pipeline -v validate
 
+  # Evaluate model on validated questions
+  run_pipeline eval --model gpt-4o
+
+  # Evaluate specific question type
+  run_pipeline eval --question-id "*_refusal" --model gpt-4o-mini
+
   # Dry-run to see prompts
   run_pipeline -d questions --rule-id "5.5_r0"
-        """
+        """,
     )
 
     # Global options (apply to all commands)
     parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Print all LLM prompts and responses to stdout'
+        "-v", "--verbose", action="store_true", help="Print all LLM prompts and responses to stdout"
     )
     parser.add_argument(
-        '-d', '--dry-run',
-        action='store_true',
-        help='Print LLM commands without executing (implies --verbose)'
+        "-d",
+        "--dry-run",
+        action="store_true",
+        help="Print LLM commands without executing (implies --verbose)",
     )
     parser.add_argument(
-        '--clean-cache',
-        action='store_true',
-        help='Delete cache files for this command, then exit'
+        "--clean-cache", action="store_true", help="Delete cache files for this command, then exit"
     )
     parser.add_argument(
-        '--ignore-cache',
-        action='store_true',
-        help="Don't read or write cache (fresh run, no persistence)"
+        "--ignore-cache",
+        action="store_true",
+        help="Don't read or write cache (fresh run, no persistence)",
     )
-    parser.add_argument(
-        '--config',
-        metavar='FILE',
-        help='Override default config file path'
-    )
+    parser.add_argument("--config", metavar="FILE", help="Override default config file path")
 
     # Subcommands
-    subparsers = parser.add_subparsers(
-        dest='command',
-        help='Available commands',
-        required=True
-    )
+    subparsers = parser.add_subparsers(dest="command", help="Available commands", required=True)
 
     # Command: all
     parser_all = subparsers.add_parser(
-        'all',
-        help='Run full pipeline (parse → rules → questions → validate)',
-        description='Execute all stages in sequence'
+        "all",
+        help="Run full pipeline (parse → rules → questions → validate)",
+        description="Execute all stages in sequence",
     )
     parser_all.add_argument(
-        '--pdf',
-        default='section_5_5.pdf',
-        help='Input PDF file (default: section_5_5.pdf)'
+        "--pdf", default="section_5_5.pdf", help="Input PDF file (default: section_5_5.pdf)"
     )
     parser_all.add_argument(
-        '--section',
-        metavar='PREFIX',
-        help='Filter to sections starting with PREFIX (e.g., "5.5")'
+        "--section", metavar="PREFIX", help='Filter to sections starting with PREFIX (e.g., "5.5")'
     )
     parser_all.add_argument(
-        '--output-dir',
-        default='data/',
-        help='Output directory root (default: data/)'
+        "--output-dir", default="data/", help="Output directory root (default: data/)"
     )
     parser_all.add_argument(
-        '--resume',
-        action='store_true',
-        help='Skip stages with existing output files'
+        "--resume", action="store_true", help="Skip stages with existing output files"
     )
 
     # Command: parse
     parser_parse = subparsers.add_parser(
-        'parse',
-        help='Extract sections from PDF',
-        description='Parse PDF and extract hierarchical section structure'
+        "parse",
+        help="Extract sections from PDF",
+        description="Parse PDF and extract hierarchical section structure",
     )
     parser_parse.add_argument(
-        '--pdf',
-        default='section_5_5.pdf',
-        help='Input PDF file (default: section_5_5.pdf)'
+        "--pdf", default="section_5_5.pdf", help="Input PDF file (default: section_5_5.pdf)"
     )
     parser_parse.add_argument(
-        '--section',
-        metavar='PREFIX',
-        help='Filter to sections starting with PREFIX'
+        "--section", metavar="PREFIX", help="Filter to sections starting with PREFIX"
     )
     parser_parse.add_argument(
-        '--output',
-        default='data/extracted/sections.json',
-        help='Save parsed sections JSON (default: data/extracted/sections.json)'
+        "--output",
+        default="data/extracted/sections.json",
+        help="Save parsed sections JSON (default: data/extracted/sections.json)",
     )
 
     # Command: rules
     parser_rules = subparsers.add_parser(
-        'rules',
-        help='Extract legal rules from sections',
-        description='Use GPT-4.1 to extract legal rules from parsed sections'
+        "rules",
+        help="Extract legal rules from sections",
+        description="Use GPT-4.1 to extract legal rules from parsed sections",
     )
     parser_rules.add_argument(
-        '--input',
-        default='data/extracted/sections.json',
-        help='Parsed sections JSON (default: data/extracted/sections.json)'
+        "--input",
+        default="data/extracted/sections.json",
+        help="Parsed sections JSON (default: data/extracted/sections.json)",
     )
     parser_rules.add_argument(
-        '--section',
-        metavar='PREFIX',
-        help='Filter which sections to process'
+        "--section", metavar="PREFIX", help="Filter which sections to process"
     )
     parser_rules.add_argument(
-        '--output',
-        default='data/extracted/rules.json',
-        help='Save rules JSON (default: data/extracted/rules.json)'
+        "--output",
+        default="data/extracted/rules.json",
+        help="Save rules JSON (default: data/extracted/rules.json)",
     )
 
     # Command: questions
     parser_questions = subparsers.add_parser(
-        'questions',
-        help='Generate questions from rules',
-        description='Generate evaluation questions (4 types per rule)'
+        "questions",
+        help="Generate questions from rules",
+        description="Generate evaluation questions (4 types per rule)",
     )
     parser_questions.add_argument(
-        '--input',
-        default='data/extracted/rules.json',
-        help='Rules JSON (default: data/extracted/rules.json)'
+        "--input",
+        default="data/extracted/rules.json",
+        help="Rules JSON (default: data/extracted/rules.json)",
     )
     parser_questions.add_argument(
-        '--rule-id',
-        metavar='PATTERN',
-        help='Filter rules by glob pattern (e.g., "5.5_r0", "5.5.2_*")'
+        "--rule-id",
+        metavar="PATTERN",
+        help='Filter rules by glob pattern (e.g., "5.5_r0", "5.5.2_*")',
     )
     parser_questions.add_argument(
-        '--types',
-        help='Comma-separated question types: def,easy,hard,refusal (default: all)'
+        "--types", help="Comma-separated question types: def,easy,hard,refusal (default: all)"
     )
     parser_questions.add_argument(
-        '--output',
-        default='data/generated/questions.json',
-        help='Save questions JSON (default: data/generated/questions.json)'
+        "--output",
+        default="data/generated/questions.json",
+        help="Save questions JSON (default: data/generated/questions.json)",
     )
 
     # Command: validate
     parser_validate = subparsers.add_parser(
-        'validate',
-        help='Validate generated questions',
-        description='Run quality validation on generated questions'
+        "validate",
+        help="Validate generated questions",
+        description="Run quality validation on generated questions",
     )
     parser_validate.add_argument(
-        '--input',
-        default='data/generated/questions.json',
-        help='Questions JSON (default: data/generated/questions.json)'
+        "--input",
+        default="data/generated/questions.json",
+        help="Questions JSON (default: data/generated/questions.json)",
     )
     parser_validate.add_argument(
-        '--question-id',
-        metavar='PATTERN',
-        help='Filter questions by glob pattern (e.g., "*_refusal")'
+        "--question-id",
+        metavar="PATTERN",
+        help='Filter questions by glob pattern (e.g., "*_refusal")',
     )
     parser_validate.add_argument(
-        '--threshold',
-        type=int,
-        default=90,
-        help='Quality threshold 0-100 (default: 90)'
+        "--threshold", type=int, default=90, help="Quality threshold 0-100 (default: 90)"
     )
     parser_validate.add_argument(
-        '--output',
-        default='data/validated/questions.json',
-        help='Validated questions JSON (default: data/validated/questions.json)'
+        "--output",
+        default="data/validated/questions.json",
+        help="Validated questions JSON (default: data/validated/questions.json)",
+    )
+
+    # Command: eval
+    parser_eval = subparsers.add_parser(
+        "eval",
+        help="Evaluate target model on questions",
+        description="Run target AI model through validated evaluation questions",
+    )
+    parser_eval.add_argument(
+        "--input",
+        default="data/validated/questions.json",
+        help="Validated questions JSON (default: data/validated/questions.json)",
+    )
+    parser_eval.add_argument(
+        "--question-id",
+        metavar="PATTERN",
+        help='Filter questions by glob pattern (e.g., "*_refusal")',
+    )
+    parser_eval.add_argument(
+        "--model", default="gpt-4o", help="OpenAI model name (default: gpt-4o)"
+    )
+    parser_eval.add_argument(
+        "--output",
+        default="data/evaluation/eval_responses.json",
+        help="Evaluation responses JSON (default: data/evaluation/eval_responses.json)",
     )
 
     return parser

@@ -1,16 +1,18 @@
 """Tests for CLI argument parsing and utilities (src/cli/)."""
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
+import src.cli.utils as cli_utils
 from src.cli.parser import create_parser, parse_args
 from src.cli.utils import (
-    filter_sections,
-    filter_rules,
-    filter_questions,
     clean_cache_by_command,
+    filter_questions,
+    filter_rules,
+    filter_sections,
     should_use_cache,
 )
-import src.cli.utils as cli_utils
 
 
 class TestArgumentParsing:
@@ -26,136 +28,182 @@ class TestArgumentParsing:
         """Test that --help flag works."""
         parser = create_parser()
         with pytest.raises(SystemExit) as exc_info:
-            parser.parse_args(['--help'])
+            parser.parse_args(["--help"])
         assert exc_info.value.code == 0
 
     def test_parse_all_command_basic(self):
         """Test parsing 'all' command with defaults."""
-        args = parse_args(['all'])
+        args = parse_args(["all"])
 
-        assert args.command == 'all'
-        assert args.pdf == 'section_5_5.pdf'
+        assert args.command == "all"
+        assert args.pdf == "section_5_5.pdf"
         assert args.section is None
-        assert args.output_dir == 'data/'
+        assert args.output_dir == "data/"
         assert args.resume is False
 
     def test_parse_all_command_with_options(self):
         """Test parsing 'all' command with options."""
-        args = parse_args(['all', '--section', '5.5', '--resume'])
+        args = parse_args(["all", "--section", "5.5", "--resume"])
 
-        assert args.command == 'all'
-        assert args.section == '5.5'
+        assert args.command == "all"
+        assert args.section == "5.5"
         assert args.resume is True
 
-    def test_parse_parse_command_requires_pdf(self):
-        """Test that 'parse' command requires --pdf."""
-        with pytest.raises(SystemExit):
-            parse_args(['parse'])
+    def test_parse_parse_command_has_pdf_default(self):
+        """Test that 'parse' command has a PDF default."""
+        args = parse_args(["parse"])
+
+        assert args.command == "parse"
+        assert args.pdf is not None
+        assert args.pdf.lower().endswith(".pdf")
 
     def test_parse_parse_command_with_pdf(self):
         """Test parsing 'parse' command with PDF."""
-        args = parse_args(['parse', '--pdf', 'test.pdf'])
+        args = parse_args(["parse", "--pdf", "test.pdf"])
 
-        assert args.command == 'parse'
-        assert args.pdf == 'test.pdf'
+        assert args.command == "parse"
+        assert args.pdf == "test.pdf"
         assert args.section is None
-        assert args.output == 'data/extracted/sections.json'
+        assert args.output == "data/extracted/sections.json"
 
     def test_parse_parse_command_with_section_filter(self):
         """Test parsing 'parse' command with section filter."""
-        args = parse_args(['parse', '--pdf', 'test.pdf', '--section', '5.5.2'])
+        args = parse_args(["parse", "--pdf", "test.pdf", "--section", "5.5.2"])
 
-        assert args.section == '5.5.2'
+        assert args.section == "5.5.2"
 
     def test_parse_rules_command_basic(self):
         """Test parsing 'rules' command with defaults."""
-        args = parse_args(['rules'])
+        args = parse_args(["rules"])
 
-        assert args.command == 'rules'
-        assert args.input == 'data/extracted/sections.json'
+        assert args.command == "rules"
+        assert args.input == "data/extracted/sections.json"
         assert args.section is None
-        assert args.output == 'data/extracted/rules.json'
+        assert args.output == "data/extracted/rules.json"
 
     def test_parse_rules_command_with_section(self):
         """Test parsing 'rules' command with section filter."""
-        args = parse_args(['rules', '--section', '5.5'])
+        args = parse_args(["rules", "--section", "5.5"])
 
-        assert args.section == '5.5'
+        assert args.section == "5.5"
 
     def test_parse_questions_command_basic(self):
         """Test parsing 'questions' command with defaults."""
-        args = parse_args(['questions'])
+        args = parse_args(["questions"])
 
-        assert args.command == 'questions'
-        assert args.input == 'data/extracted/rules.json'
+        assert args.command == "questions"
+        assert args.input == "data/extracted/rules.json"
         assert args.rule_id is None
         assert args.types is None
-        assert args.output == 'data/generated/questions.json'
+        assert args.output == "data/generated/questions.json"
 
     def test_parse_questions_command_with_rule_filter(self):
         """Test parsing 'questions' command with rule-id filter."""
-        args = parse_args(['questions', '--rule-id', '5.5_r0'])
+        args = parse_args(["questions", "--rule-id", "5.5_r0"])
 
-        assert args.rule_id == '5.5_r0'
+        assert args.rule_id == "5.5_r0"
 
     def test_parse_questions_command_with_types(self):
         """Test parsing 'questions' command with question types."""
-        args = parse_args(['questions', '--types', 'def,easy'])
+        args = parse_args(["questions", "--types", "def,easy"])
 
-        assert args.types == 'def,easy'
+        assert args.types == "def,easy"
 
     def test_parse_validate_command_basic(self):
         """Test parsing 'validate' command with defaults."""
-        args = parse_args(['validate'])
+        args = parse_args(["validate"])
 
-        assert args.command == 'validate'
-        assert args.input == 'data/generated/questions.json'
+        assert args.command == "validate"
+        assert args.input == "data/generated/questions.json"
         assert args.question_id is None
         assert args.threshold == 90
-        assert args.output == 'data/validated/questions.json'
+        assert args.output == "data/validated/questions.json"
 
     def test_parse_validate_command_with_threshold(self):
         """Test parsing 'validate' command with custom threshold."""
-        args = parse_args(['validate', '--threshold', '95'])
+        args = parse_args(["validate", "--threshold", "95"])
 
         assert args.threshold == 95
 
     def test_parse_validate_command_with_question_filter(self):
         """Test parsing 'validate' command with question filter."""
-        args = parse_args(['validate', '--question-id', '*_refusal'])
+        args = parse_args(["validate", "--question-id", "*_refusal"])
 
-        assert args.question_id == '*_refusal'
+        assert args.question_id == "*_refusal"
+
+    def test_parse_eval_command_basic(self):
+        """Test parsing 'eval' command with defaults."""
+        args = parse_args(["eval"])
+
+        assert args.command == "eval"
+        assert args.input == "data/validated/questions.json"
+        assert args.question_id is None
+        assert args.model == "gpt-4o"
+        assert args.output == "data/evaluation/eval_responses.json"
+
+    def test_parse_eval_command_with_model(self):
+        """Test parsing 'eval' command with custom model."""
+        args = parse_args(["eval", "--model", "gpt-4o-mini"])
+
+        assert args.model == "gpt-4o-mini"
+
+    def test_parse_eval_command_with_question_filter(self):
+        """Test parsing 'eval' command with question filter."""
+        args = parse_args(["eval", "--question-id", "*_refusal"])
+
+        assert args.question_id == "*_refusal"
+
+    def test_parse_eval_command_with_all_options(self):
+        """Test parsing 'eval' command with all options."""
+        args = parse_args(
+            [
+                "eval",
+                "--input",
+                "custom/questions.json",
+                "--output",
+                "custom/results.json",
+                "--model",
+                "gpt-4-turbo",
+                "--question-id",
+                "5.5_*",
+            ]
+        )
+
+        assert args.input == "custom/questions.json"
+        assert args.output == "custom/results.json"
+        assert args.model == "gpt-4-turbo"
+        assert args.question_id == "5.5_*"
 
     def test_global_verbose_flag(self):
         """Test global --verbose flag."""
-        args = parse_args(['-v', 'validate'])
+        args = parse_args(["-v", "validate"])
 
         assert args.verbose is True
-        assert args.command == 'validate'
+        assert args.command == "validate"
 
     def test_global_dry_run_flag(self):
         """Test global --dry-run flag."""
-        args = parse_args(['-d', 'questions', '--rule-id', '5.5_r0'])
+        args = parse_args(["-d", "questions", "--rule-id", "5.5_r0"])
 
         assert args.dry_run is True
-        assert args.command == 'questions'
+        assert args.command == "questions"
 
     def test_global_clean_cache_flag(self):
         """Test global --clean-cache flag."""
-        args = parse_args(['--clean-cache', 'rules', '--section', '5.5'])
+        args = parse_args(["--clean-cache", "rules", "--section", "5.5"])
 
         assert args.clean_cache is True
-        assert args.section == '5.5'
+        assert args.section == "5.5"
 
     def test_global_ignore_cache_flag(self):
         """Test global --ignore-cache flag."""
-        args = parse_args(['--ignore-cache', 'validate'])
+        args = parse_args(["--ignore-cache", "validate"])
 
         assert args.ignore_cache is True
 
     def test_multiple_global_flags(self):
         """Test multiple global flags together."""
-        args = parse_args(['-v', '-d', '--ignore-cache', 'questions'])
+        args = parse_args(["-v", "-d", "--ignore-cache", "questions"])
 
         assert args.verbose is True
         assert args.dry_run is True
@@ -342,59 +390,59 @@ class TestCacheManagement:
         # Cleanup
         cli_utils.IGNORE_CACHE = False
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_parse(self, mock_clean):
         """Test cleaning cache for 'parse' command."""
-        clean_cache_by_command('parse')
+        clean_cache_by_command("parse")
 
-        mock_clean.assert_called_once_with('cache/parse')
+        mock_clean.assert_called_once_with("cache/parse")
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_rules(self, mock_clean):
         """Test cleaning cache for 'rules' command."""
-        clean_cache_by_command('rules')
+        clean_cache_by_command("rules")
 
-        mock_clean.assert_called_once_with('cache/rules')
+        mock_clean.assert_called_once_with("cache/rules")
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_rules_with_section(self, mock_clean):
         """Test cleaning cache for 'rules' command with section filter."""
-        clean_cache_by_command('rules', section='5.5')
+        clean_cache_by_command("rules", section="5.5")
 
-        mock_clean.assert_called_once_with('cache/rules', pattern='5.5*')
+        mock_clean.assert_called_once_with("cache/rules", pattern="5.5*")
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_questions(self, mock_clean):
         """Test cleaning cache for 'questions' command."""
-        clean_cache_by_command('questions')
+        clean_cache_by_command("questions")
 
-        mock_clean.assert_called_once_with('cache/questions')
+        mock_clean.assert_called_once_with("cache/questions")
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_questions_with_rule_id(self, mock_clean):
         """Test cleaning cache for 'questions' command with rule filter."""
-        clean_cache_by_command('questions', rule_id='5.5_r0')
+        clean_cache_by_command("questions", rule_id="5.5_r0")
 
-        mock_clean.assert_called_once_with('cache/questions', pattern='5.5_r0*')
+        mock_clean.assert_called_once_with("cache/questions", pattern="5.5_r0*")
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_validate(self, mock_clean):
         """Test cleaning cache for 'validate' command."""
-        clean_cache_by_command('validate')
+        clean_cache_by_command("validate")
 
-        mock_clean.assert_called_once_with('cache/validation')
+        mock_clean.assert_called_once_with("cache/validation")
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_validate_with_question_id(self, mock_clean):
         """Test cleaning cache for 'validate' command with question filter."""
-        clean_cache_by_command('validate', question_id='*_refusal')
+        clean_cache_by_command("validate", question_id="*_refusal")
 
-        mock_clean.assert_called_once_with('cache/validation', pattern='*_refusal*')
+        mock_clean.assert_called_once_with("cache/validation", pattern="*_refusal*")
 
-    @patch('src.cli.utils.clean_cache_dir')
+    @patch("src.cli.utils.clean_cache_dir")
     def test_clean_cache_by_command_all(self, mock_clean):
         """Test cleaning cache for 'all' command cleans all caches."""
-        clean_cache_by_command('all')
+        clean_cache_by_command("all")
 
         # Should call clean_cache_dir 4 times (once for each cache directory)
         assert mock_clean.call_count == 4
@@ -466,3 +514,30 @@ class TestUtilityHelpers:
         assert test_file.exists()
         loaded_data = json.loads(test_file.read_text())
         assert loaded_data == test_data
+
+    def test_parse_llm_json_response_valid(self):
+        """Test parsing valid JSON from LLM response."""
+        from src.pipeline.util import parse_llm_json_response
+
+        # Mock OpenAI response
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = '{"result": "success", "value": 42}'
+
+        result = parse_llm_json_response(mock_response)
+
+        assert result == {"result": "success", "value": 42}
+
+    def test_parse_llm_json_response_invalid(self):
+        """Test parsing invalid JSON from LLM response raises error."""
+        import json
+
+        from src.pipeline.util import parse_llm_json_response
+
+        # Mock OpenAI response with invalid JSON
+        mock_response = Mock()
+        mock_response.choices = [Mock()]
+        mock_response.choices[0].message.content = "not valid json {"
+
+        with pytest.raises(json.JSONDecodeError):
+            parse_llm_json_response(mock_response)
