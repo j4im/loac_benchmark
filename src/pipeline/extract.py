@@ -28,11 +28,16 @@ def extract_rules(
     if client is None:
         client = get_openai_client()
 
-    # Check cache first
+    # Check cache first (unless ignore_cache flag is set)
+    from src.cli.utils import should_use_cache
     cache_path = Path(f"cache/rules/{section_id}.json")
-    if cache_path.exists():
+    if should_use_cache() and cache_path.exists():
         with open(cache_path, 'r', encoding='utf-8') as f:
             cached_data = json.load(f)
+            # Add rule_id if missing (backward compatibility)
+            for index, rule in enumerate(cached_data):
+                if 'rule_id' not in rule:
+                    rule['rule_id'] = f"{section_id}_r{index}"
             print(f"  [Cached] {len(cached_data)} rules")
             return cached_data
 
@@ -65,8 +70,9 @@ def extract_rules(
         # Validate that rules are verbatim
         rules = validate_verbatim_rules(rules, section_data['text'])
 
-        # Add source metadata to each rule
-        for rule in rules:
+        # Add source metadata and rule_id to each rule
+        for index, rule in enumerate(rules):
+            rule['rule_id'] = f"{section_id}_r{index}"
             rule['source_section'] = section_id
             rule['source_page_numbers'] = section_data['page_numbers']
 
@@ -77,10 +83,11 @@ def extract_rules(
         print(f"  Cost: ${cost:.4f}")
         print(f"  Extracted: {len(rules)} rules")
 
-        # Cache result
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(cache_path, 'w', encoding='utf-8') as f:
-            json.dump(rules, f, indent=2, ensure_ascii=False)
+        # Cache result (unless ignore_cache flag is set)
+        if should_use_cache():
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(rules, f, indent=2, ensure_ascii=False)
 
         return rules
 

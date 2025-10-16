@@ -81,6 +81,7 @@ Thumbs.db
 
 # Project-specific
 cache/
+data/
 logs/
 output/
 *.log

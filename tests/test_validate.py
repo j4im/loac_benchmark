@@ -333,10 +333,10 @@ class TestCalculateQualityScore:
         ]
 
     def test_calculate_quality_score_passes_all_thresholds(self, sample_rules):
-        """Test question that passes both individual (≥90%) and mean (≥95%) thresholds."""
+        """Test question where all components >= 90 (new threshold logic)."""
         question = {
             "question_type": "definitional",
-            "confidence": 95,  # Component 2
+            "confidence": 95,
             "metadata": {
                 "source_section": "5.5",
                 "source_rule": "Rule text"
@@ -344,10 +344,10 @@ class TestCalculateQualityScore:
         }
 
         # All components ≥ 90%
-        question_entailment = {"is_entailed": True, "confidence": 95}  # Component 3
-        answer_entailment = {"is_entailed": True, "confidence": 95}  # Component 4
+        question_entailment = {"is_entailed": True, "confidence": 95}
+        answer_entailment = {"is_entailed": True, "confidence": 95}
         distractors = [
-            {"quality_score": 90},  # Component 5 (average = 92)
+            {"quality_score": 90},  # Second-worst (median) = 92
             {"quality_score": 92},
             {"quality_score": 94}
         ]
@@ -356,12 +356,11 @@ class TestCalculateQualityScore:
             question, sample_rules, question_entailment, answer_entailment, distractors
         )
 
-        # Components: rule=95, question=95, q_ent=95, a_ent=95, dist=92
-        # Mean: (95+95+95+95+92)/5 = 94.4, which is < 95
-        # This should FAIL because mean < 95
-        assert passes is False  # Mean is 94.4, below 95% threshold
-        assert breakdown['mean_score'] == 94.4
+        # New logic: ALL components >= 90 → PASS
+        # distractor_quality uses second-worst (median) = 92
+        assert passes is True
         assert len(breakdown['failures']) == 0  # All individual components pass
+        assert breakdown['threshold'] == 90
 
     def test_calculate_quality_score_passes_with_perfect_scores(self, sample_rules):
         """Test question with perfect scores."""
@@ -388,11 +387,10 @@ class TestCalculateQualityScore:
             question, sample_rules, question_entailment, answer_entailment, distractors
         )
 
-        # Components: all >= 95
-        # Mean: (100+100+100+100+95)/5 = 99
+        # All components >= 90 → PASS
         assert passes is True
-        assert breakdown['mean_score'] == 99.0
         assert len(breakdown['failures']) == 0
+        assert breakdown['threshold'] == 90
 
     def test_calculate_quality_score_fails_individual_threshold(self, sample_rules):
         """Test question that fails individual component threshold."""
@@ -466,8 +464,8 @@ class TestCalculateQualityScore:
             question, sample_rules, question_entailment, None, None, refusal
         )
 
-        # Components: rule=95, question=95, q_ent=95, refusal=95
-        # Mean: (95+95+95+95)/4 = 95
+        # All components >= 90 → PASS
         assert passes is True
-        assert breakdown['mean_score'] == 95.0
+        assert len(breakdown['failures']) == 0
         assert 'refusal_appropriateness' in breakdown['components']
+        assert breakdown['threshold'] == 90

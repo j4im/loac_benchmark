@@ -6,6 +6,8 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from openai import OpenAI
 
+from src.cli.utils import load_section_text
+
 
 def generate_definitional(
     rule: Dict,
@@ -31,11 +33,15 @@ def generate_definitional(
     if client is None:
         client = get_openai_client()
 
+    # Load section text for context
+    section_text = load_section_text(section_id)
+
     # Build prompt
     prompt = DEFINITIONAL_PROMPT.format(
         rule_text=rule['rule_text'],
         rule_type=rule['rule_type'],
-        section_id=section_id
+        section_id=section_id,
+        section_text=section_text
     )
 
     # Call API
@@ -100,12 +106,16 @@ def generate_scenario(
     # Select guidance based on difficulty
     guidance = EASY_SCENARIO_GUIDANCE if difficulty == "easy" else HARD_SCENARIO_GUIDANCE
 
+    # Load section text for context
+    section_text = load_section_text(section_id)
+
     # Build prompt
     prompt = SCENARIO_PROMPT.format(
         difficulty=difficulty,
         rule_text=rule['rule_text'],
         rule_type=rule['rule_type'],
         section_id=section_id,
+        section_text=section_text,
         difficulty_guidance=guidance
     )
 
@@ -166,11 +176,15 @@ def generate_refusal(
     if client is None:
         client = get_openai_client()
 
+    # Load section text for context
+    section_text = load_section_text(section_id)
+
     # Build prompt
     prompt = REFUSAL_PROMPT.format(
         rule_text=rule['rule_text'],
         rule_type=rule['rule_type'],
-        section_id=section_id
+        section_id=section_id,
+        section_text=section_text
     )
 
     # Call API
@@ -226,7 +240,8 @@ def generate_questions_for_rule(
     rule: Dict,
     section_id: str,
     rule_index: int,
-    client: Optional[OpenAI] = None
+    client: Optional[OpenAI] = None,
+    question_types_filter: Optional[List[str]] = None
 ) -> List[Dict]:
     """
     Generate all questions (definitional, scenario-easy, scenario-hard, refusal) for a rule.
@@ -236,18 +251,22 @@ def generate_questions_for_rule(
         section_id: Section ID (e.g., "5.5.3")
         rule_index: Index of rule within section
         client: OpenAI client (creates new if None)
+        question_types_filter: Optional list of question types to generate
+                              (e.g., ['definitional', 'scenario_easy'])
+                              If None, generates all types
 
     Returns:
-        List of question dicts (3-4 questions per rule)
+        List of question dicts (3-4 questions per rule, or fewer if filtered)
     """
     from src.lib.openai_client import get_openai_client
 
     if client is None:
         client = get_openai_client()
 
-    # Check cache first
+    # Check cache first (only if no filter, since filtering changes output)
+    from src.cli.utils import should_use_cache
     cache_path = Path(f"cache/questions/{section_id}_r{rule_index}.json")
-    if cache_path.exists():
+    if should_use_cache() and cache_path.exists() and question_types_filter is None:
         with open(cache_path, 'r', encoding='utf-8') as f:
             cached_data = json.load(f)
             print(f"  [Cached] {len(cached_data)} questions")
@@ -256,26 +275,31 @@ def generate_questions_for_rule(
     try:
         questions = []
 
-        # Always generate definitional question
-        print(f"  Generating definitional question...")
-        questions.append(generate_definitional(rule, section_id, rule_index, client))
+        # Generate definitional question if requested
+        if question_types_filter is None or 'definitional' in question_types_filter:
+            print(f"  Generating definitional question...")
+            questions.append(generate_definitional(rule, section_id, rule_index, client))
 
-        # Always generate both scenario difficulties
-        print(f"  Generating scenario (easy) question...")
-        questions.append(generate_scenario(rule, section_id, rule_index, "easy", client))
+        # Generate scenario (easy) if requested
+        if question_types_filter is None or 'scenario_easy' in question_types_filter:
+            print(f"  Generating scenario (easy) question...")
+            questions.append(generate_scenario(rule, section_id, rule_index, "easy", client))
 
-        print(f"  Generating scenario (hard) question...")
-        questions.append(generate_scenario(rule, section_id, rule_index, "hard", client))
+        # Generate scenario (hard) if requested
+        if question_types_filter is None or 'scenario_hard' in question_types_filter:
+            print(f"  Generating scenario (hard) question...")
+            questions.append(generate_scenario(rule, section_id, rule_index, "hard", client))
 
-        # Generate refusal for all rules
-        if should_generate_refusal(rule):
+        # Generate refusal if requested and applicable
+        if (question_types_filter is None or 'refusal' in question_types_filter) and should_generate_refusal(rule):
             print(f"  Generating refusal question...")
             questions.append(generate_refusal(rule, section_id, rule_index, client))
 
-        # Cache results
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(cache_path, 'w', encoding='utf-8') as f:
-            json.dump(questions, f, indent=2, ensure_ascii=False)
+        # Cache results (unless ignore_cache flag is set)
+        if should_use_cache():
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(questions, f, indent=2, ensure_ascii=False)
 
         print(f"  Generated {len(questions)} questions for rule {rule_index}")
 

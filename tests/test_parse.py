@@ -15,7 +15,7 @@ class TestParsing:
     @pytest.fixture
     def pdf_path(self):
         """Path to test PDF."""
-        return "data/raw/section_5_5.pdf"
+        return "section_5_5.pdf"
 
     @pytest.fixture
     def parsed_sections(self, pdf_path):
@@ -126,7 +126,7 @@ class TestFootnoteExtraction:
     @pytest.fixture
     def parsed_sections(self):
         """Parse PDF once for all footnote tests."""
-        return parse_document("data/raw/section_5_5.pdf")
+        return parse_document("section_5_5.pdf")
 
     def test_main_text_does_not_contain_footnote_content(self, parsed_sections):
         """Test that footnote text is not mixed into main section text."""

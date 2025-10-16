@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from openai import OpenAI
 
+from src.cli.utils import load_section_text
+
 
 def validate_structure(question: Dict, parsed_sections: Dict) -> Tuple[bool, List[str]]:
     """
@@ -84,7 +86,8 @@ def validate_question_entailment(
     """
     Validate that the question itself is entailed by (grounded in) the source rule.
 
-    This applies to ALL question types (MC and refusal).
+    This applies only to MC questions (definitional, scenario_easy, scenario_hard).
+    Refusal questions skip this validation as they are adversarial by design.
 
     Args:
         question: Question dict with source_rule
@@ -105,10 +108,15 @@ def validate_question_entailment(
         with open(cache_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
+    # Load section text for context
+    section_id = question['metadata']['source_section']
+    section_text = load_section_text(section_id)
+
     # Build prompt
     prompt = QUESTION_ENTAILMENT_VALIDATION_PROMPT.format(
         source_rule=question['metadata']['source_rule'],
-        question=question['question']
+        question=question['question'],
+        section_text=section_text
     )
 
     try:
@@ -167,11 +175,16 @@ def validate_answer_entailment(
         with open(cache_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
+    # Load section text for context
+    section_id = question['metadata']['source_section']
+    section_text = load_section_text(section_id)
+
     # Build prompt
     prompt = ANSWER_ENTAILMENT_VALIDATION_PROMPT.format(
         source_rule=question['metadata']['source_rule'],
         question=question['question'],
-        answer=question['correct_answer']
+        answer=question['correct_answer'],
+        section_text=section_text
     )
 
     try:
@@ -230,6 +243,10 @@ def validate_distractors(
         with open(cache_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
+    # Load section text for context
+    section_id = question['metadata']['source_section']
+    section_text = load_section_text(section_id)
+
     results = []
 
     for i, distractor in enumerate(question['incorrect_answers']):
@@ -237,7 +254,8 @@ def validate_distractors(
             source_rule=question['metadata']['source_rule'],
             question=question['question'],
             correct_answer=question['correct_answer'],
-            distractor=distractor
+            distractor=distractor,
+            section_text=section_text
         )
 
         try:
@@ -297,10 +315,15 @@ def validate_refusal(
         with open(cache_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
+    # Load section text for context
+    section_id = question['metadata']['source_section']
+    section_text = load_section_text(section_id)
+
     prompt = REFUSAL_VALIDATION_PROMPT.format(
         source_rule=question['metadata']['source_rule'],
         question=question['question'],
-        refusal_reason=question['refusal_reason']
+        refusal_reason=question['refusal_reason'],
+        section_text=section_text
     )
 
     try:
@@ -370,7 +393,7 @@ def calculate_quality_score(
     Components:
     - rule_confidence (from Phase 2)
     - question_confidence (from Phase 3)
-    - question_entailment (ALL questions)
+    - question_entailment (MC questions only - skipped for refusal)
     - answer_entailment (MC questions only)
     - distractor_quality (MC questions only - uses second-worst of 3 scores)
     - refusal_appropriateness (refusal questions only)
@@ -378,7 +401,7 @@ def calculate_quality_score(
     Args:
         question: Question dict
         rules: All rules from Phase 2 (for rule confidence)
-        question_entailment: Question entailment validation result
+        question_entailment: Question entailment validation result (MC only, None for refusal)
         answer_entailment: Answer entailment validation result (MC only)
         distractor_results: List of distractor validation results (MC only)
         refusal_result: Refusal validation result (refusal only)
@@ -396,17 +419,16 @@ def calculate_quality_score(
     question_confidence = question.get('confidence', 100)
     components['question_confidence'] = question_confidence
 
-    # Component 3: Question entailment (applies to ALL question types)
-    if question_entailment and 'is_entailed' in question_entailment:
-        if question_entailment['is_entailed']:
-            components['question_entailment'] = question_entailment.get('confidence', 0)
-        else:
-            components['question_entailment'] = 0  # Hard fail if not entailed
-    else:
-        components['question_entailment'] = 0  # Fail if validation errored
-
     # Type-specific components
     if question['question_type'] in ['definitional', 'scenario_easy', 'scenario_hard']:
+        # Component 3: Question entailment (MC questions only)
+        if question_entailment and 'is_entailed' in question_entailment:
+            if question_entailment['is_entailed']:
+                components['question_entailment'] = question_entailment.get('confidence', 0)
+            else:
+                components['question_entailment'] = 0  # Hard fail if not entailed
+        else:
+            components['question_entailment'] = 0  # Fail if validation errored
         # Component 4: Answer entailment (MC only)
         if answer_entailment and 'is_entailed' in answer_entailment:
             if answer_entailment['is_entailed']:
@@ -464,7 +486,7 @@ def validate_and_filter_questions(
 
     Pipeline:
     1. Structural validation (hard gate)
-    2. Question entailment validation (ALL questions)
+    2. Question entailment validation (MC questions only - refusal questions skip this)
     3. Answer entailment validation (MC questions only)
     4. Distractor validation (MC questions only)
     5. Refusal appropriateness validation (refusal questions only)
@@ -527,18 +549,19 @@ def validate_and_filter_questions(
 
         # Step 2: LLM-based validation (for structurally valid questions)
 
-        # Question entailment (ALL questions)
-        question_entailment = validate_question_entailment(question, client)
-
-        # Type-specific validation
+        # Question entailment (MC questions only - refusal questions skip this)
+        question_entailment = None
         answer_entailment = None
         distractor_results = None
         refusal_result = None
 
         if question['question_type'] in ['definitional', 'scenario_easy', 'scenario_hard']:
+            # MC questions: validate question entailment, answer entailment, and distractors
+            question_entailment = validate_question_entailment(question, client)
             answer_entailment = validate_answer_entailment(question, client)
             distractor_results = validate_distractors(question, client)
         elif question['question_type'] == 'refusal':
+            # Refusal questions: skip question entailment, only validate refusal appropriateness
             refusal_result = validate_refusal(question, client)
 
         # Step 3: Calculate quality score (threshold-based)
@@ -583,3 +606,231 @@ def validate_and_filter_questions(
             report['by_type'][qtype]['rejected'] += 1
 
     return (validated, rejected, report)
+
+
+def generate_validation_analysis(
+    questions: List[Dict],
+    validated: List[Dict],
+    rejected: List[Dict],
+    report: Dict,
+    rules: List[Dict]
+) -> str:
+    """
+    Generate comprehensive validation analysis report.
+
+    Includes:
+    1. Score distribution analysis (to detect anchoring)
+    2. Rejection analysis by question type
+    3. Failure component breakdown
+
+    Args:
+        questions: All questions (validated + rejected)
+        validated: List of validated questions
+        rejected: List of rejected questions
+        report: Validation report dict
+        rules: All rules from Phase 2
+
+    Returns:
+        Formatted analysis report as string
+    """
+    import statistics
+    from collections import defaultdict
+
+    output_lines = []
+
+    # ========== SECTION 1: SCORE DISTRIBUTION ANALYSIS ==========
+
+    # Component types to analyze
+    components = {
+        'Rule Confidence': [],
+        'Question Conf (definitional)': [],
+        'Question Conf (scenario_easy)': [],
+        'Question Conf (scenario_hard)': [],
+        'Question Conf (refusal)': [],
+        'Question Entailment': [],
+        'Answer Entailment': [],
+        'Distractor Quality': [],
+        'Refusal Appropriateness': []
+    }
+
+
+    # Collect question confidences by type
+    for q in questions:
+        conf = q.get('confidence', 0)
+        qtype = q['question_type']
+
+        if qtype == 'definitional':
+            components['Question Conf (definitional)'].append(conf)
+        elif qtype == 'scenario_easy':
+            components['Question Conf (scenario_easy)'].append(conf)
+        elif qtype == 'scenario_hard':
+            components['Question Conf (scenario_hard)'].append(conf)
+        elif qtype == 'refusal':
+            components['Question Conf (refusal)'].append(conf)
+
+    # Collect rule confidences
+    for rule in rules:
+        components['Rule Confidence'].append(rule.get('confidence', 0))
+
+    # Collect validation scores from cache
+    cache_dir = Path('cache/validation')
+    if cache_dir.exists():
+        for cache_file in cache_dir.glob('*.json'):
+            try:
+                with open(cache_file, 'r') as f:
+                    data = json.load(f)
+
+                fname = cache_file.name
+
+                # Question entailment
+                if 'question_entailment' in fname:
+                    if isinstance(data, dict) and 'confidence' in data:
+                        components['Question Entailment'].append(data['confidence'])
+
+                # Answer entailment
+                elif 'answer_entailment' in fname:
+                    if isinstance(data, dict) and 'confidence' in data:
+                        components['Answer Entailment'].append(data['confidence'])
+
+                # Distractors
+                elif 'distractors' in fname:
+                    if isinstance(data, list):
+                        for d in data:
+                            if 'quality_score' in d:
+                                components['Distractor Quality'].append(d['quality_score'])
+
+                # Refusal
+                elif fname.endswith('_refusal.json'):
+                    if isinstance(data, dict) and 'appropriateness_score' in data:
+                        components['Refusal Appropriateness'].append(data['appropriateness_score'])
+            except:
+                pass  # Skip malformed cache files
+
+    # Print score distribution table
+    output_lines.append("\n" + "="*80)
+    output_lines.append("VALIDATION SCORE DISTRIBUTION ANALYSIS")
+    output_lines.append("="*80)
+    output_lines.append(f"{'Component':<35} {'n':>4}  {'Mean':>5} {'StdDev':>6}  {'Min':>3}  {'Max':>3}  {'#Unique':>8}")
+    output_lines.append("-"*80)
+
+    for name, values in components.items():
+        if not values:
+            continue
+
+        n = len(values)
+        mean = statistics.mean(values)
+        stddev = statistics.stdev(values) if n > 1 else 0
+        min_val = min(values)
+        max_val = max(values)
+        unique = len(set(values))
+
+        output_lines.append(f"{name:<35} {n:>4}  {mean:>5.1f} {stddev:>6.2f}  {min_val:>3}  {max_val:>3}  {unique:>8}")
+
+    output_lines.append("="*80)
+
+    # Print detailed distributions
+    output_lines.append("\nDETAILED DISTRIBUTIONS (BY DECILE):")
+    output_lines.append("="*80)
+
+    for name, values in components.items():
+        if not values:
+            continue
+
+        output_lines.append(f"\n{name}:")
+        output_lines.append(f"  n={len(values)}, mean={statistics.mean(values):.1f}, stddev={statistics.stdev(values) if len(values) > 1 else 0:.2f}")
+
+        # Count frequency by decile
+        deciles = {
+            '  0-9': 0,
+            ' 10-19': 0,
+            ' 20-29': 0,
+            ' 30-39': 0,
+            ' 40-49': 0,
+            ' 50-59': 0,
+            ' 60-69': 0,
+            ' 70-79': 0,
+            ' 80-89': 0,
+            ' 90-99': 0,
+            '  100': 0
+        }
+
+        for v in values:
+            if v == 100:
+                deciles['  100'] += 1
+            elif 0 <= v < 10:
+                deciles['  0-9'] += 1
+            elif 10 <= v < 20:
+                deciles[' 10-19'] += 1
+            elif 20 <= v < 30:
+                deciles[' 20-29'] += 1
+            elif 30 <= v < 40:
+                deciles[' 30-39'] += 1
+            elif 40 <= v < 50:
+                deciles[' 40-49'] += 1
+            elif 50 <= v < 60:
+                deciles[' 50-59'] += 1
+            elif 60 <= v < 70:
+                deciles[' 60-69'] += 1
+            elif 70 <= v < 80:
+                deciles[' 70-79'] += 1
+            elif 80 <= v < 90:
+                deciles[' 80-89'] += 1
+            elif 90 <= v < 100:
+                deciles[' 90-99'] += 1
+
+        # Print histogram
+        output_lines.append("  Decile distribution:")
+        for decile, count in deciles.items():
+            if count > 0:
+                pct = count / len(values) * 100
+                bar = "█" * min(60, int(pct * 0.6))  # Scale bars for readability
+                output_lines.append(f"    {decile}: {count:>4} ({pct:>5.1f}%) {bar}")
+
+    # ========== SECTION 2: REJECTION ANALYSIS ==========
+
+    output_lines.append("\nREJECTION ANALYSIS BY QUESTION TYPE:")
+    output_lines.append("="*80)
+
+    total = report['total_questions']
+    validated_count = report['validated']
+    rejected_count = report['rejected']
+
+    output_lines.append(f"\nOverall: {validated_count}/{total} validated ({validated_count/total*100:.1f}%)")
+    output_lines.append(f"Rejected: {rejected_count} ({rejected_count/total*100:.1f}%)\n")
+
+    output_lines.append("Breakdown by question type:")
+    for qtype in ['definitional', 'scenario_easy', 'scenario_hard', 'refusal']:
+        if qtype in report['by_type']:
+            counts = report['by_type'][qtype]
+            type_total = counts['validated'] + counts['rejected']
+            val_pct = counts['validated'] / type_total * 100 if type_total > 0 else 0
+            rej_pct = counts['rejected'] / type_total * 100 if type_total > 0 else 0
+            output_lines.append(f"  {qtype:15} - Validated: {counts['validated']:2}/{type_total:2} ({val_pct:5.1f}%)  Rejected: {counts['rejected']:2}/{type_total:2} ({rej_pct:5.1f}%)")
+
+    # Analyze failure components by question type
+    output_lines.append("\nFailure components by question type:")
+    failures_by_type = {
+        'definitional': defaultdict(int),
+        'scenario_easy': defaultdict(int),
+        'scenario_hard': defaultdict(int),
+        'refusal': defaultdict(int)
+    }
+
+    for q in rejected:
+        qtype = q['question_type']
+        if '_validation' in q and 'scoring_breakdown' in q['_validation']:
+            failures = q['_validation']['scoring_breakdown'].get('failures', {})
+            for component, score in failures.items():
+                failures_by_type[qtype][component] += 1
+
+    for qtype in ['definitional', 'scenario_easy', 'scenario_hard', 'refusal']:
+        if failures_by_type[qtype]:
+            output_lines.append(f"\n  {qtype}:")
+            for component, count in sorted(failures_by_type[qtype].items(), key=lambda x: -x[1]):
+                total_rejected = report['by_type'][qtype]['rejected']
+                pct = count / total_rejected * 100 if total_rejected > 0 else 0
+                output_lines.append(f"    - {component:30} {count:2}/{total_rejected:2} ({pct:5.1f}%)")
+
+    output_lines.append("\n" + "="*80)
+
+    return "\n".join(output_lines)
