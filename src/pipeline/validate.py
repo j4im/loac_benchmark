@@ -364,15 +364,15 @@ def calculate_quality_score(
     Calculate overall quality score using threshold-based validation.
 
     Validation Logic:
-    - Each component must be >= 90%
-    - Mean of all applicable components must be >= 95%
+    - ALL components must be >= 90
+    - Any component < 90 → question fails
 
     Components:
     - rule_confidence (from Phase 2)
     - question_confidence (from Phase 3)
     - question_entailment (ALL questions)
     - answer_entailment (MC questions only)
-    - distractor_quality (MC questions only)
+    - distractor_quality (MC questions only - uses second-worst of 3 scores)
     - refusal_appropriateness (refusal questions only)
 
     Args:
@@ -416,10 +416,12 @@ def calculate_quality_score(
         else:
             components['answer_entailment'] = 0
 
-        # Component 5: Distractor quality (MC only) - average of 3 distractors
+        # Component 5: Distractor quality (MC only) - second-worst score (median)
         if distractor_results and len(distractor_results) == 3:
             distractor_scores = [d.get('quality_score', 0) for d in distractor_results]
-            components['distractor_quality'] = sum(distractor_scores) / 3
+            # Sort scores and take the middle (second-worst/median)
+            sorted_scores = sorted(distractor_scores)
+            components['distractor_quality'] = sorted_scores[1]  # Middle value
         else:
             components['distractor_quality'] = 0
 
@@ -435,23 +437,17 @@ def calculate_quality_score(
         else:
             components['refusal_appropriateness'] = 0
 
-    # Check individual thresholds (each component >= 90%)
+    # Check threshold: ALL components must be >= 90
     failures = {k: v for k, v in components.items() if v < 90}
 
-    # Check mean threshold (>= 95%)
-    mean_score = sum(components.values()) / len(components) if components else 0
-
-    # Question passes if:
-    # 1. All components >= 90%
-    # 2. Mean >= 95%
-    passes = (len(failures) == 0) and (mean_score >= 95)
+    # Question passes if ALL components >= 90
+    passes = (len(failures) == 0)
 
     breakdown = {
         'components': components,
-        'mean_score': mean_score,
         'failures': failures,
         'passes_threshold': passes,
-        'thresholds': {'individual': 90, 'mean': 95}
+        'threshold': 90
     }
 
     return (passes, breakdown)
@@ -473,8 +469,8 @@ def validate_and_filter_questions(
     4. Distractor validation (MC questions only)
     5. Refusal appropriateness validation (refusal questions only)
     6. Threshold-based filtering:
-       - Each component must be >= 90%
-       - Mean of all components must be >= 95%
+       - ALL components must be >= 90
+       - Any component < 90 → question fails
 
     Args:
         questions: List of questions from Phase 3
@@ -500,12 +496,9 @@ def validate_and_filter_questions(
         'structural_failures': 0,
         'quality_failures': 0,
         'by_type': {},
-        'avg_mean_score': 0.0,
         'validation_method': 'threshold_based',
-        'thresholds': {'individual_component': 90, 'mean': 95}
+        'threshold': 90
     }
-
-    all_mean_scores = []
 
     for i, question in enumerate(questions):
         question_id = question.get('question_id', f'unknown_{i}')
@@ -558,13 +551,9 @@ def validate_and_filter_questions(
             refusal_result
         )
 
-        mean_score = scoring_breakdown['mean_score']
-        all_mean_scores.append(mean_score)
-
         # Add validation metadata to question
         question['_validation'] = {
             'passes_threshold': passes_threshold,
-            'mean_score': mean_score,
             'scoring_breakdown': scoring_breakdown,
             'structural_valid': structural_valid,
             'structural_issues': structural_issues,
@@ -592,9 +581,5 @@ def validate_and_filter_questions(
             report['by_type'][qtype]['validated'] += 1
         else:
             report['by_type'][qtype]['rejected'] += 1
-
-    # Calculate average mean score
-    if all_mean_scores:
-        report['avg_mean_score'] = sum(all_mean_scores) / len(all_mean_scores)
 
     return (validated, rejected, report)

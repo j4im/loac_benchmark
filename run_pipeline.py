@@ -124,7 +124,7 @@ def main():
         parsed_sections = json.load(f)
 
     # Validate and filter
-    print(f"Applying quality thresholds: Individual ≥90%, Mean ≥95%")
+    print(f"Applying quality threshold: All components ≥90%")
     validated_questions, rejected_questions, validation_report = validate_and_filter_questions(
         all_questions,
         parsed_sections,
@@ -149,7 +149,6 @@ def main():
         json.dump(validation_report, f, indent=2, ensure_ascii=False)
 
     print(f"\n✓ Validated {validation_report['validated']}/{validation_report['total_questions']} questions")
-    print(f"✓ Average mean score: {validation_report['avg_mean_score']:.1f}")
     print(f"✓ Structural failures: {validation_report['structural_failures']}")
     print(f"✓ Quality threshold failures: {validation_report['quality_failures']}")
     print(f"✓ Saved to {validated_output}")

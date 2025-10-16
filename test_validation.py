@@ -25,7 +25,7 @@ print(f"Loaded {len(parsed_sections)} sections")
 client = get_openai_client()
 
 print("\nRunning Phase 4 validation with new threshold-based logic...")
-print("Thresholds: Individual components ≥90%, Mean ≥95%\n")
+print("Threshold: All components ≥90%\n")
 
 validated, rejected, report = validate_and_filter_questions(
     questions,
@@ -43,9 +43,8 @@ print(f"Validated: {report['validated']}")
 print(f"Rejected: {report['rejected']}")
 print(f"Structural failures: {report['structural_failures']}")
 print(f"Quality failures: {report['quality_failures']}")
-print(f"Average mean score: {report.get('avg_mean_score', 0):.1f}")
 print(f"\nValidation method: {report['validation_method']}")
-print(f"Thresholds: {report['thresholds']}")
+print(f"Threshold: {report['threshold']}")
 
 print(f"\nBreakdown by type:")
 for qtype, counts in sorted(report['by_type'].items()):
@@ -76,9 +75,9 @@ if rejected:
     print(f"  ID: {sample['question_id']}")
     print(f"  Type: {sample['question_type']}")
     print(f"  Rejection reason: {sample['_validation'].get('rejected_reason')}")
-    if 'mean_score' in sample['_validation']:
-        print(f"  Mean score: {sample['_validation']['mean_score']:.1f}")
     if 'failures' in sample['_validation'].get('scoring_breakdown', {}):
         failures = sample['_validation']['scoring_breakdown']['failures']
         if failures:
-            print(f"  Failed components: {list(failures.keys())}")
+            print(f"  Failed components ({len(failures)}):")
+            for comp, score in failures.items():
+                print(f"    - {comp}: {score:.1f} (< 90)")
