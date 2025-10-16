@@ -115,11 +115,52 @@ def main():
     for qtype, count in sorted(type_counts.items()):
         print(f"  - {qtype}: {count}")
 
-    # Phase 4: Validate (coming soon)
-    print("\nPhase 4: Validation - Not yet implemented")
+    # Phase 4: Validate
+    print("\nPhase 4: Validating question quality...")
+    from src.pipeline.validate import validate_and_filter_questions
+
+    # Load parsed sections for structural validation
+    with open(args.output, 'r', encoding='utf-8') as f:
+        parsed_sections = json.load(f)
+
+    # Validate and filter
+    print(f"Applying quality thresholds: Individual ≥90%, Mean ≥95%")
+    validated_questions, rejected_questions, validation_report = validate_and_filter_questions(
+        all_questions,
+        parsed_sections,
+        all_rules,  # From Phase 2
+        client=client
+    )
+
+    # Save validated questions
+    validated_output = Path("data/validated/questions.json")
+    validated_output.parent.mkdir(parents=True, exist_ok=True)
+    with open(validated_output, 'w', encoding='utf-8') as f:
+        json.dump(validated_questions, f, indent=2, ensure_ascii=False)
+
+    # Save rejected questions with reasons
+    rejected_output = Path("data/validated/questions_rejected.json")
+    with open(rejected_output, 'w', encoding='utf-8') as f:
+        json.dump(rejected_questions, f, indent=2, ensure_ascii=False)
+
+    # Save validation report
+    report_output = Path("data/validated/validation_report.json")
+    with open(report_output, 'w', encoding='utf-8') as f:
+        json.dump(validation_report, f, indent=2, ensure_ascii=False)
+
+    print(f"\n✓ Validated {validation_report['validated']}/{validation_report['total_questions']} questions")
+    print(f"✓ Average mean score: {validation_report['avg_mean_score']:.1f}")
+    print(f"✓ Structural failures: {validation_report['structural_failures']}")
+    print(f"✓ Quality threshold failures: {validation_report['quality_failures']}")
+    print(f"✓ Saved to {validated_output}")
+    print(f"✓ Rejected {validation_report['rejected']} questions to {rejected_output}")
+
+    print("\nValidation breakdown by type:")
+    for qtype, counts in sorted(validation_report['by_type'].items()):
+        print(f"  - {qtype}: {counts['validated']} validated, {counts['rejected']} rejected")
 
     # Phase 5: Export (coming soon)
-    print("Phase 5: Export - Not yet implemented")
+    print("\nPhase 5: Export - Not yet implemented")
 
 
 if __name__ == "__main__":

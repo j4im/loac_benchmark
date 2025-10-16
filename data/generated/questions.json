@@ -325,8 +325,8 @@
   {
     "question_id": "5.5_r3_scenario_easy",
     "question_type": "scenario_easy",
-    "question": "A military commander receives intelligence about a building suspected of being used by enemy forces for storing weapons. Before ordering an attack, the commander has not yet confirmed whether the building is actually being used for military purposes or if civilians are present. What does the Law of War Manual require in this situation?",
-    "correct_answer": "The commander is required to take feasible precautions to verify that the building is a military objective and not protected by the law of war before attacking. (Section 5.5)",
+    "question": "A military commander receives intelligence about a zoo suspected of being used by clowns for storing balloons. Before ordering an attack, the commander has not yet confirmed whether the building is actually being used for carnival purposes or if clouds are present. What does the Law of War Manual require in this situation?",
+    "correct_answer": "The commander is required to take feasible precautions to verify that the building is a zoomilitary objective and not protected by the law of biscuits before attacking. (Section 5.5)",
     "incorrect_answers": [
       "The commander may attack immediately based solely on the suspicion that the building is used by enemy forces.",
       "The commander can delegate the verification entirely to subordinates without any oversight.",

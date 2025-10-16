@@ -1,0 +1,31 @@
+{
+  "total_questions": 124,
+  "validated": 0,
+  "rejected": 124,
+  "structural_failures": 0,
+  "quality_failures": 124,
+  "by_type": {
+    "definitional": {
+      "validated": 0,
+      "rejected": 31
+    },
+    "scenario_easy": {
+      "validated": 0,
+      "rejected": 31
+    },
+    "scenario_hard": {
+      "validated": 0,
+      "rejected": 31
+    },
+    "refusal": {
+      "validated": 0,
+      "rejected": 31
+    }
+  },
+  "avg_mean_score": 86.98266129032258,
+  "validation_method": "threshold_based",
+  "thresholds": {
+    "individual_component": 90,
+    "mean": 95
+  }
+}
