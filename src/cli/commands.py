@@ -247,6 +247,12 @@ def cmd_validate(args):
     with open(analysis_output, "w", encoding="utf-8") as f:
         f.write(analysis_report)
 
+    # Export to CSV
+    from src.pipeline.export import export_to_csv
+
+    csv_output = Path(args.output).parent / "benchmark_questions.csv"
+    export_to_csv(validated_questions, str(csv_output))
+
     # Print results
     print_summary(
         "VALIDATION RESULTS",
@@ -263,6 +269,7 @@ def cmd_validate(args):
     print(f"✓ Saved rejected questions to {rejected_output}")
     print(f"✓ Saved report to {report_output}")
     print(f"✓ Saved analysis to {analysis_output}")
+    print(f"✓ Exported to CSV: {csv_output}")
 
     print("\nValidation breakdown by type:")
     for qtype, counts in sorted(validation_report["by_type"].items()):
