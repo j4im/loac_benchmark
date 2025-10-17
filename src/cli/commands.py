@@ -325,6 +325,59 @@ def cmd_eval(args):
     print(f"✓ Results saved to {args.output}")
 
 
+def cmd_score(args):
+    """Execute 'score' command - score evaluation responses.
+
+    Args:
+        args: Parsed command-line arguments
+    """
+    from src.pipeline.score import (
+        analyze_confusion,
+        generate_analysis_report,
+        save_scored_results,
+        score_evaluation,
+    )
+
+    log_verbose(f"Loading evaluation responses from: {args.input}")
+
+    # Check if input file exists
+    input_path = Path(args.input)
+    if not input_path.exists():
+        print(f"Error: Input file not found: {args.input}")
+        print("Run 'eval' command first to generate evaluation responses")
+        return
+
+    # Load evaluation responses
+    with open(args.input, "r", encoding="utf-8") as f:
+        eval_data = json.load(f)
+
+    print(f"Scoring {len(eval_data)} responses...")
+
+    # Score responses
+    scoring_output = score_evaluation(eval_data)
+
+    # Analyze confusion (MC questions only)
+    mc_results = [r for r in scoring_output["scored_results"] if r["question_type"] != "refusal"]
+    confusion = analyze_confusion(mc_results)
+
+    # Generate report
+    report_text = generate_analysis_report(scoring_output["summary"], confusion)
+
+    # Print report to console
+    print("\n" + report_text)
+
+    # Save scored results
+    save_scored_results(scoring_output, args.output)
+    print(f"Scored results saved to: {args.output}")
+
+    # Save report
+    report_path = Path(args.report)
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report_text)
+    print(f"Analysis report saved to: {args.report}")
+
+
 def cmd_all(args):
     """Execute 'all' command - run full pipeline.
 

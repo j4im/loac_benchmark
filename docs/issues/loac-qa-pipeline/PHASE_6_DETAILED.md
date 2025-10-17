@@ -5,6 +5,42 @@
 **Completed**: 2025-10-16
 **Objective**: Run target model through validated evaluation questions and collect structured responses
 
+## Execution Summary
+
+**Implementation Results**:
+- ✅ All success criteria met
+- ✅ 155 total tests passing (14 new tests in `tests/test_evaluate.py`)
+- ✅ Successfully evaluated all 107 validated questions with GPT-4o
+- ✅ Deterministic shuffling working correctly (fixed RNG initialization bug)
+- ✅ Removed duplicate logging (was 3 PROMPTs + 2 RESPONSEs per call, now 1+1)
+- ✅ Added 60-second timeout to OpenAI client to prevent hanging
+- ✅ Fixed bare except clause in validate.py
+- ✅ Completed incomplete test in test_generate.py
+
+**Key Deviations from Plan**:
+1. **JSON Response Format**: Used actual OpenAI response format (`selected_answer`, `reasoning`, `refusal`, `refusal_reason`) instead of planned unified format with `answer`/`refuses_to_answer`. This aligns better with existing patterns.
+2. **JSON Parsing Location**: Created `parse_llm_json_response()` in `src/pipeline/util.py` (not `src/cli/utils.py`) for better module organization
+3. **Logging Utility Added**: Created `log_llm_call()` in `src/pipeline/util.py` alongside JSON parsing
+4. **Module-level RNG**: Shuffle RNG initialized at module level instead of per-function to avoid identical shuffles across all questions
+5. **Development Tooling**: Added Makefile with lint/format/test/clean targets and configured ruff for code quality
+
+**Files Created/Modified**:
+- ✅ `src/pipeline/evaluate.py` - evaluation implementation (258 lines)
+- ✅ `src/pipeline/util.py` - shared utilities (67 lines)
+- ✅ `src/cli/commands.py` - added `cmd_eval()`
+- ✅ `src/cli/parser.py` - added `eval` subcommand
+- ✅ `src/lib/openai_client.py` - added timeout parameter
+- ✅ `tests/test_evaluate.py` - 14 comprehensive tests
+- ✅ `Makefile` - development workflow automation
+- ✅ `pyproject.toml` - added ruff configuration
+
+**Actual Results**:
+- 107/107 questions evaluated successfully
+- 79 MC questions + 28 refusal questions
+- Evaluation responses saved to `data/evaluation/eval_responses.json`
+- Per-question caching in `cache/evaluation/` for resumability
+- Deterministic shuffling verified (same results across runs)
+
 ## Overview
 
 Implement an evaluation runner as a new CLI subcommand (`eval`) that:

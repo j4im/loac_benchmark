@@ -190,6 +190,28 @@ Examples:
         help="Evaluation responses JSON (default: data/evaluation/eval_responses.json)",
     )
 
+    # Command: score
+    parser_score = subparsers.add_parser(
+        "score",
+        help="Score evaluation responses",
+        description="Calculate performance metrics from evaluation responses",
+    )
+    parser_score.add_argument(
+        "--input",
+        default="data/evaluation/eval_responses.json",
+        help="Evaluation responses JSON (default: data/evaluation/eval_responses.json)",
+    )
+    parser_score.add_argument(
+        "--output",
+        default="data/evaluation/eval_scored.json",
+        help="Save scored results JSON (default: data/evaluation/eval_scored.json)",
+    )
+    parser_score.add_argument(
+        "--report",
+        default="data/evaluation/scoring_analysis.txt",
+        help="Save analysis report (default: data/evaluation/scoring_analysis.txt)",
+    )
+
     return parser
 
 

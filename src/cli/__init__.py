@@ -3,7 +3,15 @@
 import sys
 
 import src.cli.utils as cli_utils
-from src.cli.commands import cmd_all, cmd_eval, cmd_parse, cmd_questions, cmd_rules, cmd_validate
+from src.cli.commands import (
+    cmd_all,
+    cmd_eval,
+    cmd_parse,
+    cmd_questions,
+    cmd_rules,
+    cmd_score,
+    cmd_validate,
+)
 from src.cli.parser import parse_args
 from src.cli.utils import clean_cache_by_command
 
@@ -49,6 +57,7 @@ def main(argv=None):
             "questions": cmd_questions,
             "validate": cmd_validate,
             "eval": cmd_eval,
+            "score": cmd_score,
             "all": cmd_all,
         }
 
