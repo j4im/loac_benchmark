@@ -11,23 +11,23 @@ PDF → parse → rules → questions → validate → eval → score
 ```
 
 1. **parse** — Extract text from PDF, preserving section hierarchy and footnote refs
-   - In: `data/raw/section_5_5.pdf` → Out: `data/extracted/sections.json`
+   - In: `./section_5_5.pdf` → Out: `data/extracted/sections.json`
 
 2. **rules** — GPT-4o identifies discrete legal rules (verbatim extraction)
-   - In: `sections.json` → Out: `data/extracted/rules.json`
+   - In: `data/extracted/sections.json` → Out: `data/extracted/rules.json`
 
 3. **questions** — Generate 4 question types per rule
-   - In: `rules.json` → Out: `data/generated/questions.json`
+   - In: `data/extracted/rules.json` → Out: `data/generated/questions.json`
    - Types: definitional, scenario-easy, scenario-hard, refusal
 
 4. **validate** — LLM-based quality checks; export passing questions
-   - In: `questions.json` → Out: `data/validated/questions.json`, `benchmark_questions.csv`
+   - In: `data/generated/questions.json` → Out: `data/validated/questions.json`, `data/validated/benchmark_questions.csv`
 
 5. **eval** — Run target model through questions, collect responses
-   - In: `validated/questions.json` → Out: `data/evaluation/eval_responses.json`
+   - In: `data/validated/questions.json` → Out: `data/evaluation/eval_responses.json`
 
 6. **score** — Deterministic scoring + analysis report
-   - In: `eval_responses.json` → Out: `data/evaluation/eval_scored.json`
+   - In: `data/evaluation/eval_responses.json` → Out: `data/evaluation/eval_scored.json`
 
 Each question includes full provenance: source section, page numbers, verbatim rule text, and confidence scores.
 
@@ -89,18 +89,18 @@ uv run python run_pipeline.py -d questions --rule-id "5.5_r0"
 ## Output Files
 
 ```
+./section_5_5.pdf                        # Input PDF (you provide this)
 data/
-├── raw/section_5_5.pdf              # Input PDF (you provide this)
 ├── extracted/
-│   ├── sections.json                # Parsed sections with hierarchy
-│   └── rules.json                   # Extracted legal rules
-├── generated/questions.json         # All generated questions (4 per rule)
+│   ├── sections.json                    # Parsed sections with hierarchy
+│   └── rules.json                       # Extracted legal rules
+├── generated/questions.json             # All generated questions (4 per rule)
 ├── validated/
-│   ├── questions.json               # Questions passing validation
-│   └── benchmark_questions.csv      # Final benchmark format
+│   ├── questions.json                   # Questions passing validation
+│   └── benchmark_questions.csv          # Final benchmark format
 └── evaluation/
-    ├── eval_responses.json          # Model responses to questions
-    └── eval_scored.json             # Scored results + analysis
+    ├── eval_responses.json              # Model responses to questions
+    └── eval_scored.json                 # Scored results + analysis
 ```
 
 ## Development
