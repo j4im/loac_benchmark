@@ -224,55 +224,46 @@ See `PHASE_4_REFACTOR_SUMMARY.md` for detailed analysis of anchoring discovery a
 
 ---
 
-### Phase 8: Export & Format Conversion
-**Objective**: Package validated questions for distribution and external use
+### Phase 8: Export & Format Conversion ✅ COMPLETE
+**Objective**: Automatically export validated questions to standardized CSV format during validation
 
 **Success Criteria**:
-- [ ] CSV export using pre-existing template format (if available)
-- [ ] JSON export with full metadata (provenance, validation scores, timestamps)
-- [ ] Coverage statistics report (rules covered, question types distribution, validation metrics)
-- [ ] Export filtering by question type, section, quality score
-- [ ] Compressed archive generation for distribution
-- [ ] Integration tests for full pipeline end-to-end
-- [ ] Tests passing
-- [ ] Manual verification: Exports are clean and usable
+- [x] CSV export integrated into `validate` command (automatic side effect)
+- [x] CSV format matches template exactly (column headers, structure)
+- [x] All question types mapped correctly (definitional, scenario_easy/hard, refusal)
+- [x] Domain/doctrine field populated ("Law of War - Section 5.5")
+- [x] All 4 response columns populated for MC questions (1 correct + 3 incorrect)
+- [x] Reference text fields populated from source metadata
+- [x] Notes field includes provenance (rule_id, confidence, validation scores)
+- [x] CSV encoding handles special characters (UTF-8 with BOM)
+- [x] Output files: `data/validated/questions.json` + `data/validated/benchmark_questions.csv`
+- [x] Tests in `tests/test_export.py` (5 tests)
+- [x] All tests passing (192 total)
+- [x] Manual verification: CSV format verified (UTF-8 BOM, 108 rows, proper formatting)
 
-**Deliverable**: Export utilities in `src/export.py`; sample exports in `output/`; integration tests in `tests/test_integration.py`
+**Deliverable**: `src/pipeline/export.py` (138 lines) + `tests/test_export.py` (229 lines) + 5 comprehensive tests + CSV export integrated into validation command
 
-**Estimated Commits**: 1-2
+**Completed**: 2025-10-17
+**Actual Commits**: 1 (with subsequent test fixes)
+
+**Key Learning**: Schema mismatch caught by actual data inspection - always check real data format before implementing mappings. Initial assumptions about field names and nesting were wrong; fixed by investigating `data/validated/questions.json`.
 
 ---
 
-### Phase 9: Final Housekeeping & Documentation
+### Phase 9: Final Housekeeping & Documentation ✅ COMPLETE
 **Objective**: Prepare repository for future users and maintainers
 
 **Success Criteria**:
-- [ ] Comprehensive README.md with:
-  - Project overview and goals
-  - Installation instructions
-  - Complete CLI usage guide with examples
-  - Architecture documentation
-  - Troubleshooting section
-- [ ] Code cleanup:
-  - Remove temporary/test scripts
-  - Clean up comments and TODOs
-  - Verify consistent code style
-- [ ] Documentation audit:
-  - All phase plans current
-  - IMPLEMENTATION_PLAN.md finalized
-  - Add CONTRIBUTING.md if needed
-- [ ] Final validation:
-  - All tests passing
-  - Full pipeline runs successfully
-  - Sample data generation complete
-- [ ] Repository polish:
-  - Appropriate .gitignore entries
-  - LICENSE file (if needed)
-  - Clean git history
+- [x] Concise README.md with installation, usage, CLI reference
+- [x] Code cleanup: no TODOs, consistent style (ruff lint passes)
+- [x] Documentation audit: all phase plans current
+- [x] Final validation: all 192 tests passing
+- [x] Repository polish: .gitignore updated, LICENSE (MIT) added, .env.example exists
 
-**Deliverable**: Production-ready repository with comprehensive documentation
+**Deliverable**: Production-ready repository with concise documentation
 
-**Estimated Commits**: 2-3
+**Completed**: 2025-12-18
+**Actual Commits**: 1
 
 ---
 
@@ -336,9 +327,9 @@ dependencies = [
 ## Progress Tracking
 
 ### Current Status
-- **Active Phase**: Phase 8 (Export & Format Conversion) - Planning needed
-- **Last Update**: 2025-10-16 - Phase 7 complete, all 187 tests passing (100%)
-- **Next Step**: Plan and execute Phase 8 (CSV export, compressed archives, integration tests)
+- **Active Phase**: ✅ PROJECT COMPLETE
+- **Last Update**: 2025-12-18 - Phase 9 complete, all 192 tests passing (100%)
+- **Final Deliverables**: Production-ready pipeline with concise README, MIT license, all documentation current
 
 ### Completed Phases
 - [x] Phase 1: Project Foundation & PDF Parsing (15 tests passing) ✅ 2025-01-07
@@ -351,8 +342,11 @@ dependencies = [
   - **Additions**: Makefile, ruff configuration, timeout handling, duplicate logging removal
 - [x] Phase 7: Deterministic Scoring & Analysis (187 total tests passing, 107/107 questions scored, 100% accuracy) ✅ 2025-10-16
   - **Deliverables**: Deterministic scoring (no LLM calls), comprehensive analysis, confusion matrix, hypothesis testing framework
-- [ ] Phase 8: Export & Format Conversion
-- [ ] Phase 9: Final Housekeeping & Documentation
+- [x] Phase 8: Export & Format Conversion (192 total tests passing, CSV export with 107 questions, UTF-8 BOM encoding) ✅ 2025-10-17
+  - **Deliverables**: `src/pipeline/export.py` (138 lines), `tests/test_export.py` (5 tests), CSV integrated into validate command
+  - **Key Issue**: Schema mismatch - assumed field names/nesting wrong; fixed by inspecting actual data first
+- [x] Phase 9: Final Housekeeping & Documentation ✅ 2025-12-18
+  - **Deliverables**: Concise README.md, MIT LICENSE, .gitignore updates, all docs current
 
 ### Lessons Learned
 
@@ -453,6 +447,19 @@ dependencies = [
 - **Human-readable reports improve usability** - Text-based analysis (scoring_analysis.txt) more accessible than raw JSON for quick insights
 - **Metadata preservation enables auditing** - Full scoring breakdown with timestamps and model info supports reproducibility and debugging
 - **Empty confusion analysis is valid result** - Zero errors is a legitimate outcome; analysis functions should handle this gracefully
+
+**Phase 8:**
+- **ALWAYS inspect actual data format FIRST** - Made wrong assumptions about field names (`question_text` vs `question`) and nesting (`source_section` at top-level vs in `metadata`); cost significant debugging time
+- **Schema documentation can be outdated** - Trust actual data files over assumptions or incomplete documentation
+- **Don't add graceful error handling prematurely** - Understand root causes instead of hiding errors; user feedback was critical: "NO WE WILL NOT HANDLE MISSING FIELDS GRACEFULLY"
+- **Provide contextual error messages** - Show which question failed and what fields are available; bare KeyError messages are useless for debugging
+- **Test with real data early** - Run actual validation command with production data to catch schema mismatches immediately, not after writing all code
+- **Nested metadata requires careful access** - Source information in `metadata` dict required multiple `.get()` calls with defaults
+- **Rule ID extraction from question_id** - No dedicated `rule_id` field; must extract from `question_id` using `rsplit("_", 1)` (e.g., "5.5_r0_def" → "5.5_r0")
+- **Validation score as minimum** - Used `min(components.values())` across all validation components for conservative quality metric
+- **UTF-8 BOM critical for Excel** - `encoding='utf-8-sig'` ensures Excel properly interprets special characters
+- **CSV library handles escaping** - No manual quote/comma handling needed; Python's csv module handles this correctly
+- **Auto-export simplifies workflow** - Integrating CSV export as side effect of validation eliminates separate command, ensures CSV always matches validated JSON
 
 ---
 

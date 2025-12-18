@@ -1,67 +1,117 @@
-# LOAC QA Pipeline
+# LOAC Benchmarks
 
-Automated question generation from the DoD Law of War Manual for AI benchmarking.
+Generate AI benchmarking questions from the DoD Law of War Manual with full provenance tracking.
 
-## Setup
+## How It Works
 
-**Prerequisites:** Python 3.9+, [uv](https://github.com/astral-sh/uv)
+The pipeline transforms legal documents into validated benchmark questions in 6 stages:
+
+```
+PDF → parse → rules → questions → validate → eval → score
+```
+
+1. **parse** — Extract text from PDF, preserving section hierarchy and footnote refs
+   - In: `data/raw/section_5_5.pdf` → Out: `data/extracted/sections.json`
+
+2. **rules** — GPT-4o identifies discrete legal rules (verbatim extraction)
+   - In: `sections.json` → Out: `data/extracted/rules.json`
+
+3. **questions** — Generate 4 question types per rule
+   - In: `rules.json` → Out: `data/generated/questions.json`
+   - Types: definitional, scenario-easy, scenario-hard, refusal
+
+4. **validate** — LLM-based quality checks; export passing questions
+   - In: `questions.json` → Out: `data/validated/questions.json`, `benchmark_questions.csv`
+
+5. **eval** — Run target model through questions, collect responses
+   - In: `validated/questions.json` → Out: `data/evaluation/eval_responses.json`
+
+6. **score** — Deterministic scoring + analysis report
+   - In: `eval_responses.json` → Out: `data/evaluation/eval_scored.json`
+
+Each question includes full provenance: source section, page numbers, verbatim rule text, and confidence scores.
+
+## Quick Start
 
 ```bash
-# Install uv (if needed)
+# Prerequisites: Python 3.9+, uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Clone and install
-git clone <repo-url>
-cd loac
+# Setup
+git clone <repo-url> && cd loac
 uv sync
+cp .env.example .env  # Add your OPENAI_API_KEY
 
-# Configure API key
-cp .env.example .env
-# Edit .env: add OPENAI_API_KEY=your_key_here
+# Run full pipeline
+uv run python run_pipeline.py all --section 5.5
 
-# Verify
-uv run pytest tests/
+# Run tests
+make test
 ```
 
-## Usage
-
-**Current Status:** Phase 1 Complete - PDF parsing implemented
+## CLI Commands
 
 ```bash
-# Run the pipeline (Phase 1 only for now)
-python run_pipeline.py --parse-only
+run_pipeline <command> [options]
 
-# Or use directly in Python
-uv run python -c "
-from src.pipeline.parse import parse_document
-import json
-sections = parse_document('data/raw/section_5_5.pdf')
-with open('data/extracted/section_5_5.json', 'w') as f:
-    json.dump(sections, f, indent=2)
-"
+Commands:
+  all        Run full pipeline (parse → rules → questions → validate)
+  parse      Extract sections from PDF
+  rules      Extract legal rules from sections (GPT-4o)
+  questions  Generate questions from rules (4 per rule)
+  validate   Validate questions and export to CSV
+  eval       Evaluate target model on validated questions
+  score      Score evaluation responses
+
+Global Options:
+  -v, --verbose      Show all LLM prompts/responses
+  -d, --dry-run      Print prompts without API calls
+  --ignore-cache     Fresh run, no cache
+  --clean-cache      Delete cache for this command
 ```
 
-**Coming Soon:**
-- Rule extraction (GPT-4o)
-- Question generation (definitional, scenario, refusal)
-- Validation & export
-- Evaluation runner with AI-as-a-judge scoring
+### Examples
 
-## Project Structure
+```bash
+# Full pipeline (default: section 5.5)
+uv run python run_pipeline.py all
+
+# Process specific rule
+uv run python run_pipeline.py questions --rule-id "5.5_r0"
+
+# Evaluate with different model
+uv run python run_pipeline.py eval --model gpt-4o-mini
+
+# Debug: see prompts without calling API
+uv run python run_pipeline.py -d questions --rule-id "5.5_r0"
+```
+
+## Output Files
 
 ```
-loac/
-├── src/           # Pipeline modules
-├── tests/         # Unit tests
-├── data/          # Input/output data
-├── cache/         # API response cache
-└── output/        # Final exports
+data/
+├── raw/section_5_5.pdf              # Input PDF (you provide this)
+├── extracted/
+│   ├── sections.json                # Parsed sections with hierarchy
+│   └── rules.json                   # Extracted legal rules
+├── generated/questions.json         # All generated questions (4 per rule)
+├── validated/
+│   ├── questions.json               # Questions passing validation
+│   └── benchmark_questions.csv      # Final benchmark format
+└── evaluation/
+    ├── eval_responses.json          # Model responses to questions
+    └── eval_scored.json             # Scored results + analysis
 ```
 
 ## Development
 
 ```bash
-uv run pytest              # Run tests
-uv add package-name        # Add dependency
-uv add --dev package-name  # Add dev dependency
+make help     # Show all targets
+make test     # Lint + run tests (192 tests)
+make format   # Auto-fix code style
+make clean    # Remove data/cache (prompts first)
 ```
+
+## License
+
+MIT
