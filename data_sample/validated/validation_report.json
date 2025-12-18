@@ -1,0 +1,27 @@
+{
+  "total_questions": 124,
+  "validated": 105,
+  "rejected": 19,
+  "structural_failures": 0,
+  "quality_failures": 19,
+  "by_type": {
+    "definitional": {
+      "validated": 26,
+      "rejected": 5
+    },
+    "scenario_easy": {
+      "validated": 26,
+      "rejected": 5
+    },
+    "scenario_hard": {
+      "validated": 26,
+      "rejected": 5
+    },
+    "refusal": {
+      "validated": 27,
+      "rejected": 4
+    }
+  },
+  "validation_method": "threshold_based",
+  "threshold": 90
+}

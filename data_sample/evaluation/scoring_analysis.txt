@@ -1,0 +1,39 @@
+================================================================================
+EVALUATION SCORING ANALYSIS
+================================================================================
+
+OVERALL PERFORMANCE:
+  Total Questions: 105
+  Correct: 105
+  Accuracy: 100.0%
+
+PERFORMANCE BY QUESTION TYPE:
+  Definitional:
+    Total: 26
+    Correct: 26
+    Accuracy: 100.0%
+  Scenario Easy:
+    Total: 26
+    Correct: 26
+    Accuracy: 100.0%
+  Scenario Hard:
+    Total: 26
+    Correct: 26
+    Accuracy: 100.0%
+  Refusal:
+    Total: 27
+    Correct: 27
+    Accuracy: 100.0%
+
+DIFFICULTY ANALYSIS:
+  Easy Scenario Accuracy: 100.0%
+  Hard Scenario Accuracy: 100.0%
+  Difficulty Gap: +0.0%
+  Hypothesis Validated: False
+
+REFUSAL QUESTION ANALYSIS:
+  Total Refusal Questions: 27
+  Properly Refused: 27
+  Refusal Rate: 100.0%
+
+================================================================================

@@ -107,7 +107,7 @@ data/
 
 ```bash
 make help     # Show all targets
-make test     # Lint + run tests (192 tests)
+make test     # Lint + run tests
 make format   # Auto-fix code style
 make clean    # Remove data/cache (prompts first)
 ```

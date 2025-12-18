@@ -1,0 +1,103 @@
+
+================================================================================
+VALIDATION SCORE DISTRIBUTION ANALYSIS
+================================================================================
+Component                              n   Mean StdDev  Min  Max   #Unique
+--------------------------------------------------------------------------------
+Rule Confidence                       31   92.0   4.13   85  100         5
+Question Conf (definitional)          31   97.3   1.10   95   98         3
+Question Conf (scenario_easy)         31   97.9   0.56   95   98         3
+Question Conf (scenario_hard)         31   96.9   0.75   95   98         4
+Question Conf (refusal)               31   97.9   0.25   97   98         2
+Question Entailment                   93   95.2   4.42   60   98         4
+Answer Entailment                     93   95.1   4.43   60   98         4
+Distractor Quality                   279   87.0  10.92   45   92         6
+Refusal Appropriateness               31   98.0   0.00   98   98         1
+================================================================================
+
+DETAILED DISTRIBUTIONS (BY DECILE):
+================================================================================
+
+Rule Confidence:
+  n=31, mean=92.0, stddev=4.13
+  Decile distribution:
+     80-89:    4 ( 12.9%) ███████
+     90-99:   25 ( 80.6%) ████████████████████████████████████████████████
+      100:    2 (  6.5%) ███
+
+Question Conf (definitional):
+  n=31, mean=97.3, stddev=1.10
+  Decile distribution:
+     90-99:   31 (100.0%) ████████████████████████████████████████████████████████████
+
+Question Conf (scenario_easy):
+  n=31, mean=97.9, stddev=0.56
+  Decile distribution:
+     90-99:   31 (100.0%) ████████████████████████████████████████████████████████████
+
+Question Conf (scenario_hard):
+  n=31, mean=96.9, stddev=0.75
+  Decile distribution:
+     90-99:   31 (100.0%) ████████████████████████████████████████████████████████████
+
+Question Conf (refusal):
+  n=31, mean=97.9, stddev=0.25
+  Decile distribution:
+     90-99:   31 (100.0%) ████████████████████████████████████████████████████████████
+
+Question Entailment:
+  n=93, mean=95.2, stddev=4.42
+  Decile distribution:
+     60-69:    1 (  1.1%) 
+     90-99:   92 ( 98.9%) ███████████████████████████████████████████████████████████
+
+Answer Entailment:
+  n=93, mean=95.1, stddev=4.43
+  Decile distribution:
+     60-69:    1 (  1.1%) 
+     90-99:   92 ( 98.9%) ███████████████████████████████████████████████████████████
+
+Distractor Quality:
+  n=279, mean=87.0, stddev=10.92
+  Decile distribution:
+     40-49:   13 (  4.7%) ██
+     50-59:    7 (  2.5%) █
+     80-89:    1 (  0.4%) 
+     90-99:  258 ( 92.5%) ███████████████████████████████████████████████████████
+
+Refusal Appropriateness:
+  n=31, mean=98.0, stddev=0.00
+  Decile distribution:
+     90-99:   31 (100.0%) ████████████████████████████████████████████████████████████
+
+REJECTION ANALYSIS BY QUESTION TYPE:
+================================================================================
+
+Overall: 105/124 validated (84.7%)
+Rejected: 19 (15.3%)
+
+Breakdown by question type:
+  definitional    - Validated: 26/31 ( 83.9%)  Rejected:  5/31 ( 16.1%)
+  scenario_easy   - Validated: 26/31 ( 83.9%)  Rejected:  5/31 ( 16.1%)
+  scenario_hard   - Validated: 26/31 ( 83.9%)  Rejected:  5/31 ( 16.1%)
+  refusal         - Validated: 27/31 ( 87.1%)  Rejected:  4/31 ( 12.9%)
+
+Failure components by question type:
+
+  definitional:
+    - rule_confidence                 4/ 5 ( 80.0%)
+    - distractor_quality              1/ 5 ( 20.0%)
+
+  scenario_easy:
+    - rule_confidence                 4/ 5 ( 80.0%)
+    - distractor_quality              2/ 5 ( 40.0%)
+
+  scenario_hard:
+    - rule_confidence                 4/ 5 ( 80.0%)
+    - question_entailment             1/ 5 ( 20.0%)
+    - answer_entailment               1/ 5 ( 20.0%)
+
+  refusal:
+    - rule_confidence                 4/ 4 (100.0%)
+
+================================================================================

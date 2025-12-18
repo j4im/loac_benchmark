@@ -1,0 +1,598 @@
+[
+  {
+    "rule_text": "Under the principle of distinction, combatants may make enemy combatants and other military objectives the object of attack, but may not make the civilian population and other protected persons and objects the object of attack.160",
+    "rule_type": "permission",
+    "summary": "Combatants are allowed to attack enemy combatants and other military objectives.",
+    "actors": [
+      "combatants"
+    ],
+    "conditions": "during armed conflict",
+    "confidence": 95,
+    "footnote_refs": [
+      160
+    ],
+    "rule_id": "5.5_r0",
+    "source_section": "5.5",
+    "source_page_numbers": [
+      1,
+      2
+    ]
+  },
+  {
+    "rule_text": "Under the principle of distinction, combatants may make enemy combatants and other military objectives the object of attack, but may not make the civilian population and other protected persons and objects the object of attack.160",
+    "rule_type": "prohibition",
+    "summary": "Combatants are prohibited from targeting civilians and other protected persons and objects.",
+    "actors": [
+      "combatants"
+    ],
+    "conditions": "during armed conflict",
+    "confidence": 95,
+    "footnote_refs": [
+      160
+    ],
+    "rule_id": "5.5_r1",
+    "source_section": "5.5",
+    "source_page_numbers": [
+      1,
+      2
+    ]
+  },
+  {
+    "rule_text": "In planning and conducting attacks, decisions or determinations that a person or object is a military objective must be made in good faith based on the information available at the time,161",
+    "rule_type": "obligation",
+    "summary": "Attack planners must determine military objectives in good faith using available information.",
+    "actors": [
+      "those planning or conducting attacks"
+    ],
+    "conditions": "in planning and conducting attacks",
+    "confidence": 90,
+    "footnote_refs": [
+      161
+    ],
+    "rule_id": "5.5_r2",
+    "source_section": "5.5",
+    "source_page_numbers": [
+      1,
+      2
+    ]
+  },
+  {
+    "rule_text": "those who plan or decide upon an attack must take feasible precautions to verify that the targets to be attacked are military objectives and not protected by the law of war from being made the object of attack.162",
+    "rule_type": "obligation",
+    "summary": "Attack planners must take feasible precautions to ensure targets are military objectives and not protected persons or objects.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "in planning and conducting attacks",
+    "confidence": 95,
+    "footnote_refs": [
+      162
+    ],
+    "rule_id": "5.5_r3",
+    "source_section": "5.5",
+    "source_page_numbers": [
+      1,
+      2
+    ]
+  },
+  {
+    "rule_text": "Combatants may make enemy combatants and other military objectives the object of attack.163",
+    "rule_type": "permission",
+    "summary": "Combatants are allowed to attack enemy combatants and other military objectives.",
+    "actors": [
+      "combatants"
+    ],
+    "conditions": "during armed conflict",
+    "confidence": 98,
+    "footnote_refs": [
+      163
+    ],
+    "rule_id": "5.5.1_r0",
+    "source_section": "5.5.1",
+    "source_page_numbers": [
+      2
+    ]
+  },
+  {
+    "rule_text": "Persons, objects, and locations that are not military objectives may not be made the object of attack.",
+    "rule_type": "prohibition",
+    "summary": "It is prohibited to attack persons, objects, and locations that are not military objectives.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "when targeting persons, objects, and locations that are not military objectives",
+    "confidence": 100,
+    "footnote_refs": [],
+    "rule_id": "5.5.2_r0",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "the following persons and objects may not be made the object of attack, unless that protection is specifically forfeited under the circumstances:",
+    "rule_type": "prohibition",
+    "summary": "Certain persons and objects are protected from attack unless they lose that protection under specific circumstances.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "unless protection is specifically forfeited under the circumstances",
+    "confidence": 95,
+    "footnote_refs": [],
+    "rule_id": "5.5.2_r1",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "individual civilians and the civilian population;164",
+    "rule_type": "definition",
+    "summary": "Individual civilians and the civilian population are among those protected from attack.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      164
+    ],
+    "rule_id": "5.5.2_r2",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "military medical and religious personnel, including military medical units;165",
+    "rule_type": "definition",
+    "summary": "Military medical and religious personnel, including military medical units, are protected from attack.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      165
+    ],
+    "rule_id": "5.5.2_r3",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "combatants placed hors de combat;166",
+    "rule_type": "definition",
+    "summary": "Combatants who are hors de combat are protected from attack.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      166
+    ],
+    "rule_id": "5.5.2_r4",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "parlementaires;167",
+    "rule_type": "definition",
+    "summary": "Parlementaires are protected from attack.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      167
+    ],
+    "rule_id": "5.5.2_r5",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "military medical transport, facilities, and equipment;168",
+    "rule_type": "definition",
+    "summary": "Military medical transport, facilities, and equipment are protected from attack if they are not military objectives.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "provided they are not military objectives and unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      168
+    ],
+    "rule_id": "5.5.2_r6",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "cultural property;169",
+    "rule_type": "definition",
+    "summary": "Cultural property is protected from attack if it is not a military objective.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "provided it is not a military objective and unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      169
+    ],
+    "rule_id": "5.5.2_r7",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "historic monuments, museums, scientific, artistic, educational and cultural institutions;170",
+    "rule_type": "definition",
+    "summary": "Historic monuments, museums, scientific, artistic, educational, and cultural institutions are protected from attack if not military objectives.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "provided they are not military objectives and unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      170
+    ],
+    "rule_id": "5.5.2_r8",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "places of worship;",
+    "rule_type": "definition",
+    "summary": "Places of worship are protected from attack if not military objectives.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "provided they are not military objectives and unless protection is specifically forfeited under the circumstances",
+    "confidence": 85,
+    "footnote_refs": [],
+    "rule_id": "5.5.2_r9",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "undefended villages, towns, or cities;171",
+    "rule_type": "definition",
+    "summary": "Undefended villages, towns, or cities are protected from attack if not military objectives.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "provided they are not military objectives and unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      171
+    ],
+    "rule_id": "5.5.2_r10",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "hospital and safety zones, and persons and objects within these zones;172",
+    "rule_type": "definition",
+    "summary": "Hospital and safety zones, and persons and objects within them, are protected from attack if not military objectives.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "provided they are not military objectives and unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      172
+    ],
+    "rule_id": "5.5.2_r11",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "neutralized zones, and persons and objects within neutralized zones.173",
+    "rule_type": "definition",
+    "summary": "Neutralized zones, and persons and objects within them, are protected from attack if not military objectives.",
+    "actors": [
+      "all parties to conflict"
+    ],
+    "conditions": "provided they are not military objectives and unless protection is specifically forfeited under the circumstances",
+    "confidence": 90,
+    "footnote_refs": [
+      173
+    ],
+    "rule_id": "5.5.2_r12",
+    "source_section": "5.5.2",
+    "source_page_numbers": [
+      2,
+      3
+    ]
+  },
+  {
+    "rule_text": "In planning and conducting an attack, those who plan or decide upon an attack must take feasible precautions to verify that the targets to be attacked are military objectives174 and not protected by the law of war from being made the object of attack.175",
+    "rule_type": "obligation",
+    "summary": "Attack planners and decision-makers are required to take feasible precautions to ensure targets are military objectives and not protected objects.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "in planning and conducting an attack",
+    "confidence": 100,
+    "footnote_refs": [
+      174,
+      175
+    ],
+    "rule_id": "5.5.3_r0",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "These measures help implement the principle of distinction in classifying persons or objects as military objectives.176",
+    "rule_type": "definition",
+    "summary": "Verification measures are part of applying the principle of distinction in identifying military objectives.",
+    "actors": [
+      "unspecified"
+    ],
+    "conditions": "when classifying persons or objects as military objectives",
+    "confidence": 85,
+    "footnote_refs": [
+      176
+    ],
+    "rule_id": "5.5.3_r1",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Like other precautions in planning and conducting attacks,177 these measures are also part of the implementation of the principle of proportionality.178",
+    "rule_type": "definition",
+    "summary": "Verification measures are also part of implementing the principle of proportionality.",
+    "actors": [
+      "unspecified"
+    ],
+    "conditions": "in planning and conducting attacks",
+    "confidence": 85,
+    "footnote_refs": [
+      177,
+      178
+    ],
+    "rule_id": "5.5.3_r2",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "As discussed in § 5.2.3.2 (What Precautions Are Feasible), what precautions are feasible depends greatly on the context, including what time and other circumstances permit.181",
+    "rule_type": "definition",
+    "summary": "The feasibility of precautions depends on the context, time, and circumstances.",
+    "actors": [
+      "unspecified"
+    ],
+    "conditions": "when determining feasible precautions",
+    "confidence": 90,
+    "footnote_refs": [
+      181
+    ],
+    "rule_id": "5.5.3_r3",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "The specific verification measures may depend on how the attack is being conducted182 and what type of target is being attacked.183",
+    "rule_type": "definition",
+    "summary": "Verification measures depend on the method of attack and the type of target.",
+    "actors": [
+      "unspecified"
+    ],
+    "conditions": "when selecting verification measures",
+    "confidence": 85,
+    "footnote_refs": [
+      182,
+      183
+    ],
+    "rule_id": "5.5.3_r4",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "In any event, the law of war, including the requirements discussed in this section, does not forestall commanders and other decision-makers from making decisions and taking actions at the speed of relevance, including in high-intensity conflict, based on their good faith assessment of the information that is available to them at the time, as explained in § 5.4.3.2 (Classifying Persons or Objects as Military Objectives When Planning and Conducting Attacks).185",
+    "rule_type": "exception",
+    "summary": "Commanders and decision-makers may act quickly based on good faith assessments, even in high-intensity conflict.",
+    "actors": [
+      "commanders",
+      "other decision-makers"
+    ],
+    "conditions": "in high-intensity conflict or when acting at the speed of relevance",
+    "confidence": 95,
+    "footnote_refs": [
+      185
+    ],
+    "rule_id": "5.5.3_r5",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Feasible precautions to verify that objectives to be attacked are military objectives may include, but are not limited to, the following:",
+    "rule_type": "permission",
+    "summary": "A non-exhaustive list of permissible feasible precautions is provided.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "when verifying that attack objectives are military objectives",
+    "confidence": 90,
+    "footnote_refs": [],
+    "rule_id": "5.5.3_r6",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Reviewing the accuracy and reliability of the information supporting the assessment that a potential target is a military objective;",
+    "rule_type": "permission",
+    "summary": "Attack planners may review the accuracy and reliability of information about potential targets.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "when verifying that a potential target is a military objective",
+    "confidence": 95,
+    "footnote_refs": [],
+    "rule_id": "5.5.3_r7",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Checking potential target locations against no-strike and sensitive site lists;186",
+    "rule_type": "permission",
+    "summary": "Attack planners may check target locations against no-strike and sensitive site lists.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "when verifying that a potential target is a military objective",
+    "confidence": 95,
+    "footnote_refs": [
+      186
+    ],
+    "rule_id": "5.5.3_r8",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Reviewing previously approved targets at reasonable intervals as well as when warranted in light of fresh information and changing circumstances, e.g., to ascertain whether enemy forces continue to use the object for military purposes or whether the object’s destruction or neutralization continues to offer a definite military advantage;187",
+    "rule_type": "permission",
+    "summary": "Attack planners may review previously approved targets periodically or when new information arises.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "when verifying that a potential target is a military objective",
+    "confidence": 95,
+    "footnote_refs": [
+      187
+    ],
+    "rule_id": "5.5.3_r9",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Gathering more information, such as visual identification of the target through intelligence, surveillance and reconnaissance platforms;188",
+    "rule_type": "permission",
+    "summary": "Attack planners may gather more information, including visual identification, to verify targets.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "when verifying that a potential target is a military objective",
+    "confidence": 95,
+    "footnote_refs": [
+      188
+    ],
+    "rule_id": "5.5.3_r10",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Taking steps when carrying out a planned attack to confirm that the person or object to be attacked, is, in fact, the intended target of the attack;",
+    "rule_type": "permission",
+    "summary": "Attackers may take steps during an attack to confirm the intended target.",
+    "actors": [
+      "those who carry out a planned attack"
+    ],
+    "conditions": "when carrying out a planned attack",
+    "confidence": 95,
+    "footnote_refs": [],
+    "rule_id": "5.5.3_r11",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "rule_text": "Issuing communications to elicit reactions that inform whether a person or object is a military objective, such as summons of vessels to stop;189 directions given from intercepting aircraft;190 warnings required before the cessation of protection of medical units, vessels, or facilities;191 or some types of warnings before attacks that may affect the civilian population.192",
+    "rule_type": "permission",
+    "summary": "Attackers may issue communications to determine if a person or object is a military objective.",
+    "actors": [
+      "those who plan or decide upon an attack"
+    ],
+    "conditions": "when verifying whether a person or object is a military objective",
+    "confidence": 95,
+    "footnote_refs": [
+      189,
+      190,
+      191,
+      192
+    ],
+    "rule_id": "5.5.3_r12",
+    "source_section": "5.5.3",
+    "source_page_numbers": [
+      3,
+      4,
+      5
+    ]
+  }
+]
